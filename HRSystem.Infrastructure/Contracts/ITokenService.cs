@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 namespace HRSystem.Infrastructure.Contracts { 
-    internal interface ITokenService { 
+     public interface ITokenService { 
         Task<string> GenerateJwtTokenAsync(TPLUser user);
         Task<string> GenerateRefreshTokenAsync();
     } 

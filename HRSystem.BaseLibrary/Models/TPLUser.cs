@@ -9,7 +9,7 @@ namespace HRSystem.BaseLibrary.Models;
 [Table("TPLUser")]
 [Index("EmployeeID", Name = "IX_User", IsUnique = true)]
 [Index("Username", Name = "UQ__User__536C85E4A1E9872A", IsUnique = true)]
-public partial class TPLUser 
+public partial class TPLUser
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -25,7 +25,7 @@ public partial class TPLUser
     [StringLength(200)]
     public string PasswordHash { get; set; }
 
-    [Required]
+    [Required ]
     [StringLength(50)]
     public string Role { get; set; } = "Employee";
 
@@ -33,5 +33,5 @@ public partial class TPLUser
     [InverseProperty("TPLUser")]
     public virtual TPLEmployee Employee { get; set; }
 
-    public ICollection<RefreshToken> RefreshTokens { get; set; }
+    public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 }

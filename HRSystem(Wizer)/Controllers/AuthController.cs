@@ -1,6 +1,8 @@
 ﻿using HRSystem.BaseLibrary.DTOs;
 using HRSystem.BaseLibrary.Models;
+using HRSystem.Infrastructure.Contracts;
 using HRSystem.Infrastructure.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
@@ -16,72 +18,97 @@ namespace HRSystem_Wizer_.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly HRSystemContext _hRSystemContext;
+        private readonly IAuthService _authService;
 
-        public AuthController(HRSystemContext hRSystemContext)
+        public AuthController(IAuthService authService)
         {
-            _hRSystemContext = hRSystemContext;
-
+            _authService = authService;
         }
 
-
-        [HttpPost("Register")]
-        public ActionResult<TPLUser> Register(UserRegisterDto request)
+        // ========================== Register (Sign Up) ==========================
+        [HttpPost("register")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Register([FromBody] UserRegisterDto request)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-
-            if (_hRSystemContext.TPLUsers.Any(user => user.Username == request.Username))
-                return BadRequest("Username already exists.");
-            if (_hRSystemContext.TPLEmployees.FirstOrDefault(
-                user => user.EmployeeID == request.EmployeeId) == null)
+            try
             {
-                return BadRequest("Employee not found. Provide a valid EmployeeId.");
+                // هنا بنسجل المستخدم
+                var result = await _authService.RegisterAsync(request);
+
+                // في البروجيكتات الحقيقية أحياناً التسجيل بدون توليد توكن
+                // ممكن نعمله Login بعد التسجيل بدل ما نرجع توكن مباشرة
+                return Ok(result);
             }
-
-
-            TPLUser user = new TPLUser
+            catch (Exception ex)
             {
-                Username = request.Username,
-                EmployeeID = request.EmployeeId,
-                Role = "Employee"
-
-            };
-
-
-            user.PasswordHash = new PasswordHasher<TPLUser>()
-                .HashPassword(user, request.Password);
-
-            _hRSystemContext.TPLUsers.Add(user);
-            _hRSystemContext.SaveChanges();
-
-            return Ok(new
-            {
-                username = user.Username,
-                role = user.Role,
-                message = "User registered successfully"
-            });
+                return BadRequest(new { message = ex.Message });
+            }
         }
+
+        // ========================== Login (Sign In) ==========================
         [HttpPost("login")]
-        public ActionResult<String> Login(UserLoginDto request)
+        [AllowAnonymous]
+        public async Task<IActionResult> Login([FromBody] UserLoginDto request)
         {
-            TPLUser user = _hRSystemContext.TPLUsers.FirstOrDefault(user => user.Username == request.Username);
-            if (user == null)
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
             {
-                return BadRequest("User not found");
+                var result = await _authService.LoginAsync(request);
+                return Ok(result);
             }
-            var result = new PasswordHasher<TPLUser>()
-            .VerifyHashedPassword(user, user.PasswordHash, request.Password);
+            catch (Exception ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
+        }
 
-            if (result == PasswordVerificationResult.Failed)
-                return BadRequest("Password incorrect");
+        // ========================== Refresh Token ==========================
+        [HttpPost("refresh-token")]
+        [AllowAnonymous]
+        public async Task<IActionResult> RefreshToken([FromBody] string refreshToken)
+        {
+            if (string.IsNullOrEmpty(refreshToken))
+                return BadRequest(new { message = "Refresh token is required." });
 
-            string token = "Here you will create JWT token";
+            try
+            {
+                UserReadDto result = await _authService.RefreshTokenAsync(refreshToken);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
+        }
 
-            return Ok(new { Token = token });
+        // ========================== Logout ==========================
+        [HttpPost("logout")]
+        [Authorize] // لازم يكون المستخدم مسجل دخول
+        public async Task<IActionResult> Logout()
+        {
+            try
+            {
+                // نجيب اسم المستخدم من التوكن الحالي
+                var username = User.Identity?.Name;
 
+                if (string.IsNullOrEmpty(username))
+                    return Unauthorized();
 
+                var result = await _authService.LogoutAsync(username);
+                if (!result)
+                    return BadRequest(new { message = "Logout failed." });
+
+                return Ok(new { message = "Logged out successfully." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
 

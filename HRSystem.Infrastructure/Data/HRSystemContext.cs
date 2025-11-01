@@ -464,20 +464,16 @@ public partial class HRSystemContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_TPLUser_TPLEmployee");
         });
+        
+
         modelBuilder.Entity<RefreshToken>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__RefreshT__3214EC07E7828848");
-        });
-
-
-        modelBuilder.Entity<RefreshToken>()
-
-                .HasOne(r => r.User)
+            entity.HasOne(r => r.User)
                 .WithMany(u => u.RefreshTokens)
                 .HasForeignKey(r => r.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
-
-        OnModelCreatingPartial(modelBuilder);
+        });
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

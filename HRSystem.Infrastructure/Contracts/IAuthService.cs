@@ -1,5 +1,4 @@
-﻿using HRSystem.Infrastructure.Contracts.Requests;
-using HRSystem.Infrastructure.Contracts.Responses;
+﻿using HRSystem.BaseLibrary.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,11 +7,11 @@ using System.Threading.Tasks;
 
 namespace HRSystem.Infrastructure.Contracts
 {
-    internal interface IAuthService
+    public interface IAuthService
     {
-        Task<AuthResponse> RegisterAsync(RegisterRequest request);
-        Task<AuthResponse> LoginAsync(LoginRequest request);
-        Task<AuthResponse> RefreshTokenAsync(string refreshToken);
+        Task<UserReadDto> RegisterAsync(UserRegisterDto request);
+        Task<UserReadDto> LoginAsync(UserLoginDto request);
+        Task<UserReadDto> RefreshTokenAsync(string refreshToken);
         Task<bool> LogoutAsync(string username);
     }
 }

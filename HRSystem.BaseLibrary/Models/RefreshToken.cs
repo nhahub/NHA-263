@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HRSystem.BaseLibrary.Models;
 
-public partial class RefreshToken
+public  class RefreshToken
 {
     [Key]
     public int Id { get; set; }

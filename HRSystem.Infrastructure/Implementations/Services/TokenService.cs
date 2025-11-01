@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace HRSystem.Infrastructure.Implementations
 {
-    internal class TokenService:ITokenService
+    public class TokenService:ITokenService
     {
         private readonly IConfiguration _config;
 
@@ -27,13 +27,19 @@ namespace HRSystem.Infrastructure.Implementations
         {
             var claims = new[]
             {
+                new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString()),
                 new Claim(ClaimTypes.Name, user.Username),
                 new Claim(ClaimTypes.Role, user.Role),
                 new Claim("EmployeeID", user.EmployeeID.ToString())
             };
 
+            var keyString = _config["Jwt:Key"];
+            if (string.IsNullOrEmpty(keyString))
+                throw new Exception("JWT Key is missing or empty in configuration.");
+
+
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512);
 
             var token = new JwtSecurityToken(
                 issuer: _config["Jwt:Issuer"],
@@ -46,14 +52,14 @@ namespace HRSystem.Infrastructure.Implementations
             return await Task.FromResult(new JwtSecurityTokenHandler().WriteToken(token));
         }
 
-        public async Task<string> GenerateRefreshTokenAsync()
+        public  Task<string> GenerateRefreshTokenAsync()
         {
             var randomBytes = new byte[32];
-            using (var rng = RandomNumberGenerator.Create())
-            {
+            using var rng = RandomNumberGenerator.Create();
+            
                 rng.GetBytes(randomBytes);
-            }
-            return await Task.FromResult(Convert.ToBase64String(randomBytes));
+            
+            return  Task.FromResult(Convert.ToBase64String(randomBytes));
         }
     }
 }
