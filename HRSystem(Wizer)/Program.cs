@@ -1,17 +1,18 @@
 // To use the HRSystemContext class
 using HRSystem.BaseLibrary;
-using HRSystem.BaseLibrary.Profiles;
-using HRSystem.Infrastructure.Contracts;
 using HRSystem.Infrastructure.Data;
-using HRSystem.Infrastructure.Implementations;
 using HRSystem.Infrastructure.Implementations.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using HRSystem.BaseLibrary.Profiles;
+using HRSystem.Infrastructure.Contracts;
+using HRSystem.Infrastructure.Implementations;
 
 
 namespace HRSystem_Wizer_
@@ -31,6 +32,12 @@ namespace HRSystem_Wizer_
             });
 
             builder.Services.AddAutoMapper((typeof(HRMappingProfile).Assembly));
+
+            // Register repositories
+            builder.Services.AddScoped<ICompanyProfileRepository, CompanyProfileRepository>();
+            builder.Services.AddScoped<IBranchRepository, BranchRepository>();
+            builder.Services.AddScoped<IHRDepartmentRepository, HRDepartmentRepository>();
+            builder.Services.AddScoped<IUserRepository, UserRepository>();
 
             // Add services to the container.
             builder.Services.AddControllers();

@@ -59,13 +59,19 @@ namespace HRSystem.BaseLibrary.Profiles // Using the specified Profiles namespac
             // =========================================================================
 
             // Read Mapping
-            CreateMap<TPLUser, UserReadDto>();
+            CreateMap<TPLUser, UserReadDto>()
+                .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserID))
+                .ForMember(dest => dest.EmployeeId, opt => opt.MapFrom(src => src.EmployeeID));
 
-            // Registration Mapping (Mapping DTO to Entity)
-            CreateMap<UserRegisterDto, TPLUser>();
+            // Registration Mapping - We exclude Password and ConfirmPassword
+            // Password hashing will be done in the controller
+            CreateMap<UserRegisterDto, TPLUser>()
+                .ForMember(dest => dest.UserID, opt => opt.Ignore())
+                .ForMember(dest => dest.EmployeeID, opt => opt.MapFrom(src => src.EmployeeId))
+                .ForMember(dest => dest.PasswordHash, opt => opt.Ignore()); // Set manually in controller
 
-            // Login Mapping (Mapping DTO to Entity)
-            CreateMap<UserLoginDto, TPLUser>();
+            // Login Mapping is not needed - we use the DTO directly for validation
+            // UserLoginDto ->> Manual validation in controller
         }
     }
 }
