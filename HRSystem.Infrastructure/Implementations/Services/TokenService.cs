@@ -12,7 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 
-namespace HRSystem.Infrastructure.Implementations
+namespace HRSystem.Infrastructure.Implementations.Services
 {
     public class TokenService:ITokenService
     {

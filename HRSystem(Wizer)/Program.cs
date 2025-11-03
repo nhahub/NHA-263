@@ -4,6 +4,7 @@ using HRSystem.BaseLibrary.Profiles;
 using HRSystem.Infrastructure.Contracts;
 using HRSystem.Infrastructure.Data;
 using HRSystem.Infrastructure.Implementations;
+using HRSystem.Infrastructure.Implementations.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

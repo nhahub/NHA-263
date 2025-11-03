@@ -46,34 +46,38 @@ namespace HRSystem.Infrastructure.Implementations
                     .Where(e => e.EmployeeID == request.EmployeeId)
                     .Select(e => e.DepartmentID)
                     .FirstOrDefault();
+                string depNameEn = _context.LkpHRDepartments
+                        .Where(d => d.DepartmentId == deptid)
+                        .Select(d => d.NameEn)
+                        .FirstOrDefault();
 
-            if (deptid == 6)
-                { 
-                    request.Role = "admin";
-            }
-            else if (deptid == 2)
-                {
-                    request.Role = "HR";
-            }
-            else
-            {
-                request.Role = "Employee";
-            }
-
-            var newUser = new TPLUser
+                if (depNameEn.Equals("Human Resources"))
+                    { 
+                        request.Role = "HR";
+                }
+                else if (depNameEn.Equals("General Administration"))
                     {
-                        EmployeeID = request.EmployeeId,
-                        Username = request.Username,
-                        Role = request.Role
+                        request.Role = "admin";
+                }
+                else
+                {
+                    request.Role = "Employee";
+                }
+
+                var newUser = new TPLUser
+                        {
+                            EmployeeID = request.EmployeeId,
+                            Username = request.Username,
+                            Role = request.Role
                     
-                };
+                    };
 
-            var hashedPassword = new PasswordHasher<TPLUser>()
-                    .HashPassword(newUser, request.Password);
-            newUser.PasswordHash = hashedPassword;
+                var hashedPassword = new PasswordHasher<TPLUser>()
+                        .HashPassword(newUser, request.Password);
+                newUser.PasswordHash = hashedPassword;
 
-            _context.TPLUsers.Add(newUser);
-                await _context.SaveChangesAsync();
+                _context.TPLUsers.Add(newUser);
+                    await _context.SaveChangesAsync();
 
                 
                 return new UserReadDto
@@ -106,72 +110,72 @@ namespace HRSystem.Infrastructure.Implementations
                     Token = refreshToken,
                     UserId = user.UserID,
                     Created = DateTime.UtcNow,
-                    Expires = DateTime.UtcNow.AddDays(7)
+                    Expires = DateTime.UtcNow.AddDays(14)
                 };
 
                 _context.RefreshTokens.Add(refreshTokenEntity);
                 await _context.SaveChangesAsync();
 
-             var userReadDto=   new UserReadDto
-            {
-                UserId = user.UserID,
-                EmployeeId = user.EmployeeID,
-                Username = user.Username,
-                Role = user.Role,
-                Token = token,
-                RefreshToken = refreshToken,
-                TokenExpires = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["Jwt:ExpireMinutes"]))
-            };
-            return userReadDto;
+                 var userReadDto=   new UserReadDto
+                {
+                    UserId = user.UserID,
+                    EmployeeId = user.EmployeeID,
+                    Username = user.Username,
+                    Role = user.Role,
+                    Token = token,
+                    RefreshToken = refreshToken,
+                    TokenExpires = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["Jwt:ExpireMinutes"]))
+                };
+                return userReadDto;
             }
 
             public async Task<UserReadDto> RefreshTokenAsync(string refreshToken)
             {
-            //  نجيب التوكن من قاعدة البيانات
-            var storedToken = await _context.RefreshTokens
-                .Include(rt => rt.User)
-                .FirstOrDefaultAsync(rt => rt.Token == refreshToken);
-
-            if (storedToken == null)
-                throw new Exception("Invalid refresh token.");
-
-            //  نتحقق إذا انتهى أو اتلغى
-            if (storedToken.Expires < DateTime.UtcNow)
-                throw new Exception("Refresh token has expired.");
-
-            if (storedToken.Revoked != null)
-                throw new Exception("Refresh token has been revoked.");
-
-            //  نولّد توكن جديد + refresh token جديد
-            var newJwtToken = await _tokenService.GenerateJwtTokenAsync(storedToken.User);
-            var newRefreshToken = await _tokenService.GenerateRefreshTokenAsync();
-
-            //  نحدث الجدول القديم (نلغي القديم ونضيف الجديد)
-            storedToken.Revoked = DateTime.UtcNow;
-
-            var newTokenEntry = new RefreshToken
-            {
-                Token = newRefreshToken,
-                UserId = storedToken.UserId,
-                Created = DateTime.UtcNow,
-                Expires = DateTime.UtcNow.AddDays(14) // refresh token يعيش أسبوع
-            };
-
-            _context.RefreshTokens.Add(newTokenEntry);
-            await _context.SaveChangesAsync();
-
-            //  نرجع DTO جديد فيه التوكنات الجديدة
-            var NewUserReadDto = new UserReadDto();
-
-            NewUserReadDto.UserId = storedToken.User.UserID;
-                NewUserReadDto.EmployeeId = storedToken.User.EmployeeID;
-                NewUserReadDto.Username = storedToken.User.Username;
-                NewUserReadDto.Role = storedToken.User.Role;
-                NewUserReadDto.Token = newJwtToken;
-                NewUserReadDto.RefreshToken = newRefreshToken;
-                NewUserReadDto.TokenExpires = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["Jwt:ExpireMinutes"]));
             
-            return NewUserReadDto;
+                var storedToken = await _context.RefreshTokens
+                    .Include(rt => rt.User)
+                    .FirstOrDefaultAsync(rt => rt.Token == refreshToken);
+
+                if (storedToken == null)
+                    throw new Exception("Invalid refresh token.");
+
+                
+                if (storedToken.Expires < DateTime.UtcNow)
+                    throw new Exception("Refresh token has expired.");
+
+                if (storedToken.Revoked != null)
+                    throw new Exception("Refresh token has been revoked.");
+
+               
+                var newJwtToken = await _tokenService.GenerateJwtTokenAsync(storedToken.User);
+                var newRefreshToken = await _tokenService.GenerateRefreshTokenAsync();
+
+                
+                storedToken.Revoked = DateTime.UtcNow;
+
+                var newTokenEntry = new RefreshToken
+                {
+                    Token = newRefreshToken,
+                    UserId = storedToken.UserId,
+                    Created = DateTime.UtcNow,
+                    Expires = DateTime.UtcNow.AddDays(14) 
+                };
+
+                _context.RefreshTokens.Add(newTokenEntry);
+                await _context.SaveChangesAsync();
+
+                
+                var NewUserReadDto = new UserReadDto();
+
+                NewUserReadDto.UserId = storedToken.User.UserID;
+                    NewUserReadDto.EmployeeId = storedToken.User.EmployeeID;
+                    NewUserReadDto.Username = storedToken.User.Username;
+                    NewUserReadDto.Role = storedToken.User.Role;
+                    NewUserReadDto.Token = newJwtToken;
+                    NewUserReadDto.RefreshToken = newRefreshToken;
+                    NewUserReadDto.TokenExpires = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["Jwt:ExpireMinutes"]));
+            
+                return NewUserReadDto;
         }
 
             public async Task<bool> LogoutAsync(string username)
