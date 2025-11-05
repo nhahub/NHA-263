@@ -10,6 +10,7 @@ namespace HRSystem.BaseLibrary.Models;
 public partial class LKPSalary
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int SalaryID { get; set; }
 
     public int EmployeeID { get; set; }

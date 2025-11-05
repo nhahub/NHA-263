@@ -9,6 +9,7 @@ namespace HRSystem.BaseLibrary.Models;
 public partial class TPLPermission
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int permission_id { get; set; }
 
     public int employee_id { get; set; }

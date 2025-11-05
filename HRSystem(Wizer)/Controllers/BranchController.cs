@@ -2,6 +2,7 @@ using AutoMapper;
 using HRSystem.BaseLibrary.DTOs;
 using HRSystem.BaseLibrary.Models;
 using HRSystem.Infrastructure.Contracts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HRSystem_Wizer_.Controllers
@@ -29,6 +30,7 @@ namespace HRSystem_Wizer_.Controllers
 
         // Get all branches
         [HttpGet]
+        [Authorize(Roles = "admin, HR")]
         public async Task<ActionResult<IEnumerable<BranchReadDto>>> GetAll()
         {
             try
@@ -46,6 +48,7 @@ namespace HRSystem_Wizer_.Controllers
 
         // Get branch by ID
         [HttpGet("{id}")]
+        [Authorize(Roles = "admin, HR")]
         public async Task<ActionResult<BranchReadDto>> GetById(int id)
         {
             try
@@ -68,6 +71,7 @@ namespace HRSystem_Wizer_.Controllers
 
         // Get branches by company ID
         [HttpGet("company/{companyId}")]
+        [Authorize(Roles = "admin, HR")]
         public async Task<ActionResult<IEnumerable<BranchReadDto>>> GetByCompanyId(int companyId)
         {
             try
@@ -85,6 +89,7 @@ namespace HRSystem_Wizer_.Controllers
 
         // Create a new branch
         [HttpPost]
+        [Authorize(Roles = "admin")]
         public async Task<ActionResult<BranchReadDto>> Create([FromBody] BranchCreateDto createDto)
         {
             try
@@ -126,6 +131,7 @@ namespace HRSystem_Wizer_.Controllers
 
         // Update an existing branch
         [HttpPut("{id}")]
+        [Authorize(Roles = "admin")]
         public async Task<ActionResult<BranchReadDto>> Update(int id, [FromBody] BranchUpdateDto updateDto)
         {
             try
@@ -169,6 +175,7 @@ namespace HRSystem_Wizer_.Controllers
 
         // Delete (soft delete) a branch
         [HttpDelete("{id}")]
+        [Authorize(Roles = "admin")]
         public async Task<IActionResult> Delete(int id)
         {
             try

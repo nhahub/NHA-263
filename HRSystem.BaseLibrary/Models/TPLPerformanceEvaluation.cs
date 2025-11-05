@@ -10,6 +10,7 @@ namespace HRSystem.BaseLibrary.Models;
 public partial class TPLPerformanceEvaluation
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int EvaluationID { get; set; }
 
     public int EmployeeID { get; set; }

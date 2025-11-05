@@ -10,6 +10,7 @@ namespace HRSystem.BaseLibrary.Models;
 public partial class LkpJobApplication
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int JobApplicationId { get; set; }
 
     public int JobID { get; set; }

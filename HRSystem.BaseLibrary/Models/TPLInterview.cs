@@ -10,6 +10,7 @@ namespace HRSystem.BaseLibrary.Models;
 public partial class TPLInterview
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int InterviewID { get; set; }
 
     public int CandidateID { get; set; }

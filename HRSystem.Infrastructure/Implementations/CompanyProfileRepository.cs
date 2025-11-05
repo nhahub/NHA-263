@@ -21,7 +21,7 @@ namespace HRSystem.Infrastructure.Implementations
 
         public async Task<LkpGeneralDataCompanyProfile?> GetByNameAsync(string name)
         {
-            return await _dbSet.FirstOrDefaultAsync(x => x.Name == name && !x.IsDeleted);
+            return await _dbSet.FirstOrDefaultAsync(x => x.NameEn == name && !x.IsDeleted);
         }
 
         public override async Task<IEnumerable<LkpGeneralDataCompanyProfile>> GetAllAsync()

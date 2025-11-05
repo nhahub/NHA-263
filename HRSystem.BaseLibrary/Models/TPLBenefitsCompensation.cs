@@ -10,6 +10,7 @@ namespace HRSystem.BaseLibrary.Models;
 public partial class TPLBenefitsCompensation
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int BenefitID { get; set; }
 
     public int EmployeeID { get; set; }

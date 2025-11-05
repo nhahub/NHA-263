@@ -2,6 +2,7 @@ using AutoMapper;
 using HRSystem.BaseLibrary.DTOs;
 using HRSystem.BaseLibrary.Models;
 using HRSystem.Infrastructure.Contracts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HRSystem_Wizer_.Controllers
@@ -26,6 +27,7 @@ namespace HRSystem_Wizer_.Controllers
 
         // Get all users
         [HttpGet]
+        [Authorize(Roles ="admin , HR")]
         public async Task<ActionResult<IEnumerable<UserReadDto>>> GetAll()
         {
             try
@@ -43,6 +45,7 @@ namespace HRSystem_Wizer_.Controllers
 
         // Get user by ID
         [HttpGet("{id}")]
+        [Authorize(Roles = "admin , HR")]
         public async Task<ActionResult<UserReadDto>> GetById(int id)
         {
             try
@@ -63,86 +66,87 @@ namespace HRSystem_Wizer_.Controllers
             }
         }
 
-        // Register a new user
-        [HttpPost("register")]
-        public async Task<ActionResult<UserReadDto>> Register([FromBody] UserRegisterDto registerDto)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest(ModelState);
-                }
+        //// Register a new user
+        //[HttpPost("register")]
+        //public async Task<ActionResult<UserReadDto>> Register([FromBody] UserRegisterDto registerDto)
+        //{
+        //    try
+        //    {
+        //        if (!ModelState.IsValid)
+        //        {
+        //            return BadRequest(ModelState);
+        //        }
 
-                // Check if username already exists
-                var existingUser = await _repository.GetByUsernameAsync(registerDto.Username);
-                if (existingUser != null)
-                {
-                    return Conflict($"Username '{registerDto.Username}' is already taken");
-                }
+        //        // Check if username already exists
+        //        var existingUser = await _repository.GetByUsernameAsync(registerDto.Username);
+        //        if (existingUser != null)
+        //        {
+        //            return Conflict($"Username '{registerDto.Username}' is already taken");
+        //        }
 
-                // Check if employee already has a user account
-                var existingUserByEmployee = await _repository.GetByEmployeeIdAsync(registerDto.EmployeeId);
-                if (existingUserByEmployee != null)
-                {
-                    return Conflict($"Employee with ID {registerDto.EmployeeId} already has a user account");
-                }
+        //        // Check if employee already has a user account
+        //        var existingUserByEmployee = await _repository.GetByEmployeeIdAsync(registerDto.EmployeeId);
+        //        if (existingUserByEmployee != null)
+        //        {
+        //            return Conflict($"Employee with ID {registerDto.EmployeeId} already has a user account");
+        //        }
 
-                // Hash the password using BCrypt
-                var passwordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password);
+        //        // Hash the password using BCrypt
+        //        var passwordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password);
 
-                var user = _mapper.Map<TPLUser>(registerDto);
-                user.PasswordHash = passwordHash;
+        //        var user = _mapper.Map<TPLUser>(registerDto);
+        //        user.PasswordHash = passwordHash;
 
-                await _repository.AddAsync(user);
-                await _repository.SaveChangesAsync();
+        //        await _repository.AddAsync(user);
+        //        await _repository.SaveChangesAsync();
 
-                var userDto = _mapper.Map<UserReadDto>(user);
-                return CreatedAtAction(nameof(GetById), new { id = user.UserID }, userDto);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error registering user");
-                return StatusCode(500, "An error occurred while registering the user");
-            }
-        }
+        //        var userDto = _mapper.Map<UserReadDto>(user);
+        //        return CreatedAtAction(nameof(GetById), new { id = user.UserID }, userDto);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Error registering user");
+        //        return StatusCode(500, "An error occurred while registering the user");
+        //    }
+        //}
 
-        // User login
-        [HttpPost("login")]
-        public async Task<ActionResult<UserReadDto>> Login([FromBody] UserLoginDto loginDto)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest(ModelState);
-                }
+        //// User login
+        //[HttpPost("login")]
+        //public async Task<ActionResult<UserReadDto>> Login([FromBody] UserLoginDto loginDto)
+        //{
+        //    try
+        //    {
+        //        if (!ModelState.IsValid)
+        //        {
+        //            return BadRequest(ModelState);
+        //        }
 
-                var user = await _repository.GetByUsernameAsync(loginDto.Username);
-                if (user == null)
-                {
-                    return Unauthorized("Invalid username or password");
-                }
+        //        var user = await _repository.GetByUsernameAsync(loginDto.Username);
+        //        if (user == null)
+        //        {
+        //            return Unauthorized("Invalid username or password");
+        //        }
 
-                // Verify password using BCrypt
-                var isValidPassword = BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash);
-                if (!isValidPassword)
-                {
-                    return Unauthorized("Invalid username or password");
-                }
+        //        // Verify password using BCrypt
+        //        var isValidPassword = BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash);
+        //        if (!isValidPassword)
+        //        {
+        //            return Unauthorized("Invalid username or password");
+        //        }
 
-                var userDto = _mapper.Map<UserReadDto>(user);
-                return Ok(userDto);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error during login");
-                return StatusCode(500, "An error occurred during login");
-            }
-        }
+        //        var userDto = _mapper.Map<UserReadDto>(user);
+        //        return Ok(userDto);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Error during login");
+        //        return StatusCode(500, "An error occurred during login");
+        //    }
+        //}
 
         // Update user role
         [HttpPut("{id}/role")]
+        [Authorize(Roles = "admin ")]
         public async Task<ActionResult<UserReadDto>> UpdateRole(int id, [FromBody] string role)
         {
             try
@@ -174,6 +178,7 @@ namespace HRSystem_Wizer_.Controllers
 
         // Delete a user
         [HttpDelete("{id}")]
+        [Authorize(Roles = "admin ")]
         public async Task<IActionResult> Delete(int id)
         {
             try

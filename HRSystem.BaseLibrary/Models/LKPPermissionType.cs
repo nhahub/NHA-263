@@ -9,6 +9,7 @@ namespace HRSystem.BaseLibrary.Models;
 public partial class LKPPermissionType
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int permission_type_id { get; set; }
 
     [Required]

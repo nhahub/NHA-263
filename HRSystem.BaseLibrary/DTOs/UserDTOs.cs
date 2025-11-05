@@ -1,5 +1,6 @@
 ﻿// DTOs for TPLUser Entity (Authentication and Authorization)
 
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -17,6 +18,12 @@ namespace HRSystem.BaseLibrary.DTOs
         // Security Info (safe to expose)
         public string Username { get; set; }
         public string Role { get; set; }
+
+
+        // Tokens Info
+        public string Token { get; set; }
+        public string RefreshToken { get; set; }
+        public DateTime TokenExpires { get; set; }
     }
 
     // =================================================================================
@@ -43,9 +50,9 @@ namespace HRSystem.BaseLibrary.DTOs
         [Compare("Password", ErrorMessage = "Passwords do not match.")]
         public string ConfirmPassword { get; set; }
 
-        [Required(ErrorMessage = "Role is required.")]
+        
         [StringLength(50, ErrorMessage = "Role name cannot exceed 50 characters.")]
-        public string Role { get; set; }
+        public string Role { get; set; } = "Employee";
     }
 
     // =================================================================================

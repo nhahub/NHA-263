@@ -9,6 +9,7 @@ namespace HRSystem.BaseLibrary.Models;
 public partial class TPLDisciplinaryAction
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int ActionID { get; set; }
 
     public int EmployeeID { get; set; }

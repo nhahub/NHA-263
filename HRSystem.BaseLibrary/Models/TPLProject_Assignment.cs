@@ -20,6 +20,7 @@ public partial class TPLProject_Assignment
     public int HoursWorked { get; set; }
 
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int assignment_id { get; set; }
 
     [Required]

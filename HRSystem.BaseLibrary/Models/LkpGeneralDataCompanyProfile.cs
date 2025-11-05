@@ -9,10 +9,11 @@ namespace HRSystem.BaseLibrary.Models;
 public partial class LkpGeneralDataCompanyProfile
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int CompanyProfileId { get; set; }
     [Required(ErrorMessage = "Name is required")]
     [StringLength(150)]
-    public string Name { get; set; }
+    public string NameEn { get; set; }
 
     [Required(ErrorMessage = "Insurance number is required")]
     [StringLength(100)]

@@ -10,6 +10,7 @@ namespace HRSystem.BaseLibrary.Models;
 public partial class TPLSurvey
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int SurveyID { get; set; }
 
     [Required]

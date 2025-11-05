@@ -2,6 +2,7 @@ using AutoMapper;
 using HRSystem.BaseLibrary.DTOs;
 using HRSystem.BaseLibrary.Models;
 using HRSystem.Infrastructure.Contracts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HRSystem_Wizer_.Controllers
@@ -29,6 +30,7 @@ namespace HRSystem_Wizer_.Controllers
 
         // Get all HR departments
         [HttpGet]
+        [Authorize(Roles = "admin ,HR ")]
         public async Task<ActionResult<IEnumerable<HRDepartmentReadDto>>> GetAll()
         {
             try
@@ -46,6 +48,7 @@ namespace HRSystem_Wizer_.Controllers
 
         // Get HR department by ID
         [HttpGet("{id}")]
+        [Authorize(Roles = "admin ,HR ")]
         public async Task<ActionResult<HRDepartmentReadDto>> GetById(int id)
         {
             try
@@ -68,6 +71,7 @@ namespace HRSystem_Wizer_.Controllers
 
         // Get HR departments by branch ID
         [HttpGet("branch/{branchId}")]
+        [Authorize(Roles = "admin ,HR ")]
         public async Task<ActionResult<IEnumerable<HRDepartmentReadDto>>> GetByBranchId(int branchId)
         {
             try
@@ -85,6 +89,7 @@ namespace HRSystem_Wizer_.Controllers
 
         // Create a new HR department
         [HttpPost]
+        [Authorize(Roles = "admin")]
         public async Task<ActionResult<HRDepartmentReadDto>> Create([FromBody] HRDepartmentCreateDto createDto)
         {
             try
@@ -119,6 +124,7 @@ namespace HRSystem_Wizer_.Controllers
 
         // Update an existing HR department
         [HttpPut("{id}")]
+        [Authorize(Roles = "admin")]
         public async Task<ActionResult<HRDepartmentReadDto>> Update(int id, [FromBody] HRDepartmentUpdateDto updateDto)
         {
             try
@@ -162,6 +168,7 @@ namespace HRSystem_Wizer_.Controllers
 
         // Delete (soft delete) an HR department
         [HttpDelete("{id}")]
+        [Authorize(Roles = "admin")]
         public async Task<IActionResult> Delete(int id)
         {
             try

@@ -10,6 +10,7 @@ namespace HRSystem.BaseLibrary.Models;
 public partial class TPLAssetManagement
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int AssetID { get; set; }
 
     [Required]

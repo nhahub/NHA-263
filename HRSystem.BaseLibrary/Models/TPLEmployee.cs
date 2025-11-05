@@ -11,6 +11,7 @@ namespace HRSystem.BaseLibrary.Models;
 public partial class TPLEmployee
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int EmployeeID { get; set; }
 
     [Required]

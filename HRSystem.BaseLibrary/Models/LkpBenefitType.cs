@@ -9,6 +9,7 @@ namespace HRSystem.BaseLibrary.Models;
 public partial class LkpBenefitType
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int BenefitTypeID { get; set; }
 
     [Required]

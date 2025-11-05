@@ -9,6 +9,7 @@ namespace HRSystem.BaseLibrary.Models;
 public partial class TPLSelfServiceRequest
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int RequestID { get; set; }
 
     public int EmployeeID { get; set; }

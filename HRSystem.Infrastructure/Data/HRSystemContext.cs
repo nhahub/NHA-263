@@ -1,7 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using HRSystem.BaseLibrary.Models;
+﻿using HRSystem.BaseLibrary.Models;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+
 
 namespace HRSystem.Infrastructure.Data;
 
@@ -15,7 +17,7 @@ public partial class HRSystemContext : DbContext
         : base(options)
     {
     }
-
+    
     public virtual DbSet<LKPLeaveType> LKPLeaveTypes { get; set; }
 
     public virtual DbSet<LKPPermissionType> LKPPermissionTypes { get; set; }
@@ -88,7 +90,9 @@ public partial class HRSystemContext : DbContext
 
     public virtual DbSet<TPLUser> TPLUsers { get; set; }
 
-    public virtual DbSet<TblLLeaveBalance> TblLLeaveBalances { get; set; }
+    public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
+
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -99,14 +103,14 @@ public partial class HRSystemContext : DbContext
 
         modelBuilder.Entity<LKPPermissionType>(entity =>
         {
-            entity.Property(e => e.permission_type_id).ValueGeneratedNever();
+            entity.Property(e => e.permission_type_id).ValueGeneratedOnAdd();
         });
 
         modelBuilder.Entity<LKPSalary>(entity =>
         {
             entity.HasKey(e => e.SalaryID).HasName("PK__LKPSalar__4BE204B719479BCC");
 
-            entity.Property(e => e.SalaryID).ValueGeneratedNever();
+            entity.Property(e => e.SalaryID).ValueGeneratedOnAdd();
 
             entity.HasOne(d => d.Employee).WithMany(p => p.LKPSalaries)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -115,7 +119,7 @@ public partial class HRSystemContext : DbContext
 
         modelBuilder.Entity<LkpBenefitType>(entity =>
         {
-            entity.Property(e => e.BenefitTypeID).ValueGeneratedNever();
+            entity.Property(e => e.BenefitTypeID).ValueGeneratedOnAdd();
         });
 
         modelBuilder.Entity<LkpGeneralDataBranch>(entity =>
@@ -145,7 +149,7 @@ public partial class HRSystemContext : DbContext
 
         modelBuilder.Entity<LkpJobApplication>(entity =>
         {
-            entity.Property(e => e.JobApplicationId).ValueGeneratedNever();
+            entity.Property(e => e.JobApplicationId).ValueGeneratedOnAdd();
             entity.Property(e => e.Email).IsFixedLength();
 
             entity.HasOne(d => d.CV).WithMany(p => p.LkpJobApplications).HasConstraintName("FK_LkpJobApplication_TPLCVBank");
@@ -155,7 +159,7 @@ public partial class HRSystemContext : DbContext
         {
             entity.HasKey(e => e.AssetID).HasName("PK__TPLAsset__434923721A60BBB8");
 
-            entity.Property(e => e.AssetID).ValueGeneratedNever();
+            entity.Property(e => e.AssetID).ValueGeneratedOnAdd();
 
             entity.HasOne(d => d.AssignedToNavigation).WithMany(p => p.TPLAssetManagements)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -166,7 +170,7 @@ public partial class HRSystemContext : DbContext
         {
             entity.HasKey(e => e.AttendanceID).HasName("PK__TPLAtten__8B69263C191476DC");
 
-            entity.Property(e => e.AttendanceID).ValueGeneratedNever();
+            entity.Property(e => e.AttendanceID).ValueGeneratedOnAdd();
 
             entity.HasOne(d => d.Employee).WithMany(p => p.TPLAttendances)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -177,7 +181,7 @@ public partial class HRSystemContext : DbContext
         {
             entity.HasKey(e => e.BenefitID).HasName("PK__Benefits__5754C53AEB6B105B");
 
-            entity.Property(e => e.BenefitID).ValueGeneratedNever();
+            entity.Property(e => e.BenefitID).ValueGeneratedOnAdd();
 
             entity.HasOne(d => d.BenefitType).WithMany(p => p.TPLBenefitsCompensations)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -190,14 +194,14 @@ public partial class HRSystemContext : DbContext
 
         modelBuilder.Entity<TPLCVBank>(entity =>
         {
-            entity.Property(e => e.CV_ID).ValueGeneratedNever();
+            entity.Property(e => e.CV_ID).ValueGeneratedOnAdd();
         });
 
         modelBuilder.Entity<TPLCandidate>(entity =>
         {
             entity.HasKey(e => e.CandidateID).HasName("PK__TPLCandi__DF539BFC3A8F1883");
 
-            entity.Property(e => e.CandidateID).ValueGeneratedNever();
+            entity.Property(e => e.CandidateID).ValueGeneratedOnAdd();
 
             entity.HasOne(d => d.JobApplication).WithMany(p => p.TPLCandidates)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -208,7 +212,7 @@ public partial class HRSystemContext : DbContext
         {
             entity.HasKey(e => e.ActionID).HasName("PK__TPLDisci__FFE3F4B90953BFED");
 
-            entity.Property(e => e.ActionID).ValueGeneratedNever();
+            entity.Property(e => e.ActionID).ValueGeneratedOnAdd();
 
             entity.HasOne(d => d.Employee).WithMany(p => p.TPLDisciplinaryActionEmployees)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -223,7 +227,7 @@ public partial class HRSystemContext : DbContext
         {
             entity.HasKey(e => e.DocumentID).HasName("PK__TPLDocum__1ABEEF6F44C1B7DC");
 
-            entity.Property(e => e.DocumentID).ValueGeneratedNever();
+            entity.Property(e => e.DocumentID).ValueGeneratedOnAdd();
 
             entity.HasOne(d => d.Employee).WithMany(p => p.TPLDocumentManagements)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -234,7 +238,7 @@ public partial class HRSystemContext : DbContext
         {
             entity.HasKey(e => e.EmployeeID).HasName("PK__Employee__7AD04FF148254588");
 
-            entity.Property(e => e.EmployeeID).ValueGeneratedNever();
+            entity.Property(e => e.EmployeeID).ValueGeneratedOnAdd();
 
             entity.HasOne(d => d.Department).WithMany(p => p.TPLEmployees)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -260,14 +264,14 @@ public partial class HRSystemContext : DbContext
 
         modelBuilder.Entity<TPLEvaluationCriterion>(entity =>
         {
-            entity.Property(e => e.CriteriaID).ValueGeneratedNever();
+            entity.Property(e => e.CriteriaID).ValueGeneratedOnAdd();
         });
 
         modelBuilder.Entity<TPLHRNeedRequest>(entity =>
         {
             entity.HasKey(e => e.HRNeedID).HasName("PK_HRNeedRequests");
 
-            entity.Property(e => e.HRNeedID).ValueGeneratedNever();
+            entity.Property(e => e.HRNeedID).ValueGeneratedOnAdd();
 
             entity.HasOne(d => d.Department).WithMany(p => p.TPLHRNeedRequests)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -278,7 +282,7 @@ public partial class HRSystemContext : DbContext
         {
             entity.HasKey(e => e.InterviewID).HasName("PK__Intervie__C97C5832B0092694");
 
-            entity.Property(e => e.InterviewID).ValueGeneratedNever();
+            entity.Property(e => e.InterviewID).ValueGeneratedOnAdd();
 
             entity.HasOne(d => d.Candidate).WithMany(p => p.TPLInterviews)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -293,7 +297,7 @@ public partial class HRSystemContext : DbContext
         {
             entity.HasKey(e => e.JobID).HasName("PK__TPLJob__056690E20F0CC5B9");
 
-            entity.Property(e => e.JobID).ValueGeneratedNever();
+            entity.Property(e => e.JobID).ValueGeneratedOnAdd();
         });
 
         modelBuilder.Entity<TPLLeave>(entity =>
@@ -307,7 +311,7 @@ public partial class HRSystemContext : DbContext
 
         modelBuilder.Entity<TPLLeaveBalance>(entity =>
         {
-            entity.Property(e => e.BalanceId).ValueGeneratedNever();
+            entity.Property(e => e.BalanceId).ValueGeneratedOnAdd();
 
             entity.HasOne(d => d.Employee).WithMany(p => p.TPLLeaveBalances)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -318,7 +322,7 @@ public partial class HRSystemContext : DbContext
         {
             entity.HasKey(e => e.ExitID).HasName("PK__TPLOffbo__26D64E9808277847");
 
-            entity.Property(e => e.ExitID).ValueGeneratedNever();
+            entity.Property(e => e.ExitID).ValueGeneratedOnAdd();
 
             entity.HasOne(d => d.Employee).WithMany(p => p.TPLOffboardings)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -329,7 +333,7 @@ public partial class HRSystemContext : DbContext
         {
             entity.HasKey(e => e.OnboardingID).HasName("PK__Onboardi__43F2371E2B631C75");
 
-            entity.Property(e => e.OnboardingID).ValueGeneratedNever();
+            entity.Property(e => e.OnboardingID).ValueGeneratedOnAdd();
 
             entity.HasOne(d => d.Employee).WithMany(p => p.TPLOnboardings)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -340,7 +344,7 @@ public partial class HRSystemContext : DbContext
         {
             entity.HasKey(e => e.EvaluationID).HasName("PK__TPLPerfo__36AE68D36D7296F8");
 
-            entity.Property(e => e.EvaluationID).ValueGeneratedNever();
+            entity.Property(e => e.EvaluationID).ValueGeneratedOnAdd();
 
             entity.HasOne(d => d.Criteria).WithMany(p => p.TPLPerformanceEvaluations)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -353,7 +357,7 @@ public partial class HRSystemContext : DbContext
 
         modelBuilder.Entity<TPLPermission>(entity =>
         {
-            entity.Property(e => e.permission_id).ValueGeneratedNever();
+            entity.Property(e => e.permission_id).ValueGeneratedOnAdd();
 
             entity.HasOne(d => d.employee).WithMany(p => p.TPLPermissions)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -368,14 +372,14 @@ public partial class HRSystemContext : DbContext
         {
             entity.HasKey(e => e.ProjectID).HasName("PK__TPLProje__761ABED0A98D3175");
 
-            entity.Property(e => e.ProjectID).ValueGeneratedNever();
+            entity.Property(e => e.ProjectID).ValueGeneratedOnAdd();
 
             entity.HasOne(d => d.Manager).WithMany(p => p.TPLProjects).HasConstraintName("FK_TPLProject_Manager");
         });
 
         modelBuilder.Entity<TPLProject_Assignment>(entity =>
         {
-            entity.Property(e => e.assignment_id).ValueGeneratedNever();
+            entity.Property(e => e.assignment_id).ValueGeneratedOnAdd();
 
             entity.HasOne(d => d.Employee).WithMany(p => p.TPLProject_Assignments)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -390,7 +394,7 @@ public partial class HRSystemContext : DbContext
         {
             entity.HasKey(e => e.PortalID).HasName("PK__TPLRecru__B87D58338DAADC9C");
 
-            entity.Property(e => e.PortalID).ValueGeneratedNever();
+            entity.Property(e => e.PortalID).ValueGeneratedOnAdd();
 
             entity.HasOne(d => d.HRNeed).WithMany(p => p.TPLRecruitmentPortals)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -399,7 +403,7 @@ public partial class HRSystemContext : DbContext
 
         modelBuilder.Entity<TPLRequest>(entity =>
         {
-            entity.Property(e => e.request_id).ValueGeneratedNever();
+            entity.Property(e => e.request_id).ValueGeneratedOnAdd();
 
             entity.HasOne(d => d.employee).WithMany(p => p.TPLRequests)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -414,7 +418,7 @@ public partial class HRSystemContext : DbContext
         {
             entity.HasKey(e => e.RequestID).HasName("PK__TPLSelfS__33A8519A2AA9D005");
 
-            entity.Property(e => e.RequestID).ValueGeneratedNever();
+            entity.Property(e => e.RequestID).ValueGeneratedOnAdd();
 
             entity.HasOne(d => d.Employee).WithMany(p => p.TPLSelfServiceRequests)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -425,14 +429,14 @@ public partial class HRSystemContext : DbContext
         {
             entity.HasKey(e => e.SurveyID).HasName("PK__TPLSurve__A5481F9D7B7BA7D2");
 
-            entity.Property(e => e.SurveyID).ValueGeneratedNever();
+            entity.Property(e => e.SurveyID).ValueGeneratedOnAdd();
         });
 
         modelBuilder.Entity<TPLSurvey_Response>(entity =>
         {
             entity.HasKey(e => e.ResponseID).HasName("PK__TPLSurve__1AAA640CF9F8B7BF");
 
-            entity.Property(e => e.ResponseID).ValueGeneratedNever();
+            entity.Property(e => e.ResponseID).ValueGeneratedOnAdd();
 
             entity.HasOne(d => d.Employee).WithMany(p => p.TPLSurvey_Responses)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -447,26 +451,29 @@ public partial class HRSystemContext : DbContext
         {
             entity.HasKey(e => e.TrainingID).HasName("PK__TPLTrain__E8D71DE221E8C971");
 
-            entity.Property(e => e.TrainingID).ValueGeneratedNever();
+            entity.Property(e => e.TrainingID).ValueGeneratedOnAdd();
         });
 
         modelBuilder.Entity<TPLUser>(entity =>
         {
             entity.HasKey(e => e.UserID).HasName("PK__User__1788CCAC2EB55247");
 
-            entity.Property(e => e.UserID).ValueGeneratedNever();
+            entity.Property(e => e.UserID).ValueGeneratedOnAdd();
 
             entity.HasOne(d => d.Employee).WithOne(p => p.TPLUser)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_TPLUser_TPLEmployee");
         });
+        
 
-        modelBuilder.Entity<TblLLeaveBalance>(entity =>
+        modelBuilder.Entity<RefreshToken>(entity =>
         {
-            entity.Property(e => e.LeaveBalanceID).ValueGeneratedNever();
+            entity.HasKey(e => e.Id).HasName("PK__RefreshT__3214EC07E7828848");
+            entity.HasOne(r => r.User)
+                .WithMany(u => u.RefreshTokens)
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
-
-        OnModelCreatingPartial(modelBuilder);
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

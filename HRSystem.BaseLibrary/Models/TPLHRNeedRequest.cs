@@ -9,6 +9,7 @@ namespace HRSystem.BaseLibrary.Models;
 public partial class TPLHRNeedRequest
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int HRNeedID { get; set; }
 
     public int DepartmentId { get; set; }

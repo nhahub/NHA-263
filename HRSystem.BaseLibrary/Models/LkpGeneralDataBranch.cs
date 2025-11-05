@@ -9,6 +9,7 @@ namespace HRSystem.BaseLibrary.Models;
 public partial class LkpGeneralDataBranch
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int BranchId { get; set; }
 
     public int CompanyId { get; set; }

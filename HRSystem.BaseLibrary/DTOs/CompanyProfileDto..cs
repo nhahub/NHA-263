@@ -14,7 +14,7 @@ namespace HRSystem.BaseLibrary.DTOs
         public int CompanyProfileId { get; set; }
 
         // General Info
-        public string Name { get; set; }
+        public string NameEn { get; set; }
         public string InsuranceNumber { get; set; }
         public string TaxNumber { get; set; }
 
@@ -39,7 +39,7 @@ namespace HRSystem.BaseLibrary.DTOs
         // Name validation
         [Required(ErrorMessage = "Name is required.")]
         [StringLength(150, ErrorMessage = "Name cannot exceed 150 characters.")]
-        public string Name { get; set; }
+        public string NameEn { get; set; }
 
         // Insurance Number validation (Assuming 10 digits only)
         [Required(ErrorMessage = "Insurance Number is required.")]

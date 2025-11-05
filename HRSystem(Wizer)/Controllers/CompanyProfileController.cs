@@ -2,6 +2,7 @@ using AutoMapper;
 using HRSystem.BaseLibrary.DTOs;
 using HRSystem.BaseLibrary.Models;
 using HRSystem.Infrastructure.Contracts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HRSystem_Wizer_.Controllers
@@ -26,6 +27,7 @@ namespace HRSystem_Wizer_.Controllers
 
         // Get all company profiles
         [HttpGet]
+        [Authorize(Roles = "admin, HR")]
         public async Task<ActionResult<IEnumerable<CompanyProfileReadDto>>> GetAll()
         {
             try
@@ -43,6 +45,7 @@ namespace HRSystem_Wizer_.Controllers
 
         // Get company profile by ID
         [HttpGet("{id}")]
+        [Authorize(Roles = "admin, HR")]
         public async Task<ActionResult<CompanyProfileReadDto>> GetById(int id)
         {
             try
@@ -65,6 +68,7 @@ namespace HRSystem_Wizer_.Controllers
 
         // Create a new company profile
         [HttpPost]
+        [Authorize(Roles = "admin")]
         public async Task<ActionResult<CompanyProfileReadDto>> Create([FromBody] CompanyProfileCreateDto createDto)
         {
             try
@@ -75,10 +79,10 @@ namespace HRSystem_Wizer_.Controllers
                 }
 
                 // Check if company with same name already exists
-                var existingCompany = await _repository.GetByNameAsync(createDto.Name);
+                var existingCompany = await _repository.GetByNameAsync(createDto.NameEn);
                 if (existingCompany != null)
                 {
-                    return Conflict($"A company profile with name '{createDto.Name}' already exists");
+                    return Conflict($"A company profile with name '{createDto.NameEn}' already exists");
                 }
 
                 var company = _mapper.Map<LkpGeneralDataCompanyProfile>(createDto);
@@ -100,6 +104,7 @@ namespace HRSystem_Wizer_.Controllers
 
         // Update an existing company profile
         [HttpPut("{id}")]
+        [Authorize(Roles = "admin")]
         public async Task<ActionResult<CompanyProfileReadDto>> Update(int id, [FromBody] CompanyProfileUpdateDto updateDto)
         {
             try
@@ -136,6 +141,7 @@ namespace HRSystem_Wizer_.Controllers
 
         // Delete (soft delete) a company profile
         [HttpDelete("{id}")]
+        [Authorize(Roles = "admin")]
         public async Task<IActionResult> Delete(int id)
         {
             try

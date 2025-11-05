@@ -1,0 +1,10 @@
+use HRSystem
+  CREATE TABLE RefreshTokens (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Token NVARCHAR(500) NOT NULL,
+    Expires DATETIME NOT NULL,
+    Created DATETIME NOT NULL,
+    Revoked DATETIME NULL,
+    UserId INT NOT NULL,
+    CONSTRAINT FK_RefreshTokens_TPLUsers FOREIGN KEY (UserId) REFERENCES TPLUser(UserId)
+);

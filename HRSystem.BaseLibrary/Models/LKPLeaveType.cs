@@ -9,6 +9,7 @@ namespace HRSystem.BaseLibrary.Models;
 public partial class LKPLeaveType
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int LeaveTypeId { get; set; }
 
     [Required]

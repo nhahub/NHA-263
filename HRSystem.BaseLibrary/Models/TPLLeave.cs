@@ -11,6 +11,7 @@ namespace HRSystem.BaseLibrary.Models;
 public partial class TPLLeave
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int LeaveID { get; set; }
 
     public int EmployeeID { get; set; }
