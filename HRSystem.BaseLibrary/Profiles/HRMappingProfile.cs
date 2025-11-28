@@ -113,6 +113,8 @@ namespace HRSystem.BaseLibrary.Profiles // Using the specified Profiles namespac
                 .ForMember(dest => dest.BalanceId, opt => opt.MapFrom(src => src.BalanceId))
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
+            
+
             // =========================================================================
             // 7. DTOs for LKPLeaveType (Leave Type - CRUD) - NEW MAPPING
             // =========================================================================
@@ -149,7 +151,7 @@ namespace HRSystem.BaseLibrary.Profiles // Using the specified Profiles namespac
             // 10. Responsible for the process of converting data between DTOs and Entities
             // =========================================================================
 
-            // في HRSystem.BaseLibrary/Profiles/HRMappingProfile.cs
+            // HRSystem.BaseLibrary/Profiles/HRMappingProfile.cs
 
             // ... (Your existing Mappings for LeaveType and LeaveBalance)
 
@@ -172,6 +174,244 @@ namespace HRSystem.BaseLibrary.Profiles // Using the specified Profiles namespac
             CreateMap<TPLLeave, LeaveLogReadDto>()
             .ForMember(dest => dest.LeaveId, opt => opt.MapFrom(src => src.LeaveID))
             .ForMember(dest => dest.RequestId, opt => opt.MapFrom(src => src.request_id));
+
+
+            // =========================================================================
+            // 12. PermissionType MAPPINGS
+            // =========================================================================
+
+            // Create DTO to Entity
+            CreateMap<LKPPermissionTypeCreateDTO, LKPPermissionType>();
+
+            // Update DTO to Entity
+            CreateMap<LKPPermissionTypeUpdateDTO, LKPPermissionType>();
+
+            // Entity to Read DTO
+            CreateMap<LKPPermissionType, LKPPermissionTypeReadDTO>();
+
+            // =========================================================================
+            // 13. Permission MAPPINGS
+            // =========================================================================
+            // Create DTO to Entity
+            CreateMap<PermissionCreateDto, TPLPermission>()
+                .ForMember(dest => dest.permission_id, opt => opt.Ignore())
+                .ForMember(dest => dest.request_date, opt => opt.MapFrom(src => DateTime.Now)) // Set submission time
+                .ForMember(dest => dest.status, opt => opt.MapFrom(src => "Pending")); // Default status
+
+            // Update DTO to Entity (for partial updates/manager status changes)
+            CreateMap<TPLPermissionUpdateDTO, TPLPermission>();
+
+            // Entity to Read DTO
+            CreateMap<TPLPermission, PermissionReadDto>()
+                .ForMember(dest => dest.PermissionId, opt => opt.MapFrom(src => src.permission_id));
+            // Note: EmployeeName and PermissionTypeName need to be resolved in the Service/Controller
+
+            // =========================================================================
+            // 14. DTOs for TPLAttendance (Attendance Module) - NEW MAPPING
+            // =========================================================================
+
+            // 1. Create Mapping: DTO to Entity (Input to DB)
+            CreateMap<AttendanceCreateDto, TPLAttendance>()
+                .ForMember(dest => dest.AttendanceID, opt => opt.Ignore())
+                .ForMember(dest => dest.CheckInLatitude, opt => opt.MapFrom(src => src.CheckInLatitude))
+                .ForMember(dest => dest.CheckInLongitude, opt => opt.MapFrom(src => src.CheckInLongitude))
+                .ForMember(dest => dest.EmployeeID, opt => opt.MapFrom(src => src.EmployeeID))
+
+                // Note: The Controller overrides EmployeeID from the Token, but mapping must be defined.
+                .ForMember(dest => dest.CheckIn, opt => opt.MapFrom(src => src.CheckIn))
+                .ForMember(dest => dest.CheckOut, opt => opt.MapFrom(src => src.CheckOut));
+
+
+            // 2. Read Mapping: Entity to ReadDto (DB to Output)
+            CreateMap<TPLAttendance, AttendanceReadDto>()
+                .ForMember(dest => dest.AttendanceID, opt => opt.MapFrom(src => src.AttendanceID));
+            // Add additional mapping for EmployeeName if the navigation property is loaded in the repository
+            // .ForMember(dest => dest.EmployeeName, opt => opt.MapFrom(src => src.Employee.Name));
+
+            // 3. Update Mapping (لـ TPLAttendanceUpdateDTO)
+            CreateMap<TPLAttendanceUpdateDTO, TPLAttendance>();
+
+            // =========================================================================
+            // 15. DTOs for TPLTraining (Training Course Management)
+            // =========================================================
+
+            // 1. Create Mapping: DTO to Entity
+            CreateMap<TPLTrainingCreateDTO, TPLTraining>()
+                .ForMember(dest => dest.TrainingID, opt => opt.Ignore()); // Ignore the PK for creation
+
+            // 2. Read Mapping: Entity to Read DTO
+            CreateMap<TPLTraining, TPLTrainingReadDTO>();
+
+            // 3. Update Mapping: DTO to Entity
+            CreateMap<TPLTrainingUpdateDTO, TPLTraining>();
+
+            // =========================================================================
+            // 16. DTOs for TPLEmployee_Training (Employee Enrollment and Results)
+            // =========================================================================
+
+            // 1. Create Mapping: DTO to Entity (Enrollment)
+            CreateMap<TPLEmployeeTrainingCreateDTO, TPLEmployee_Training>()
+                // Note: The PK (EmployeeID, TrainingID) is the composite key.
+                .ForMember(dest => dest.CompletionStatus, opt => opt.MapFrom(src => src.CompletionStatus));
+            // The service layer handles existence check, but mapping is direct here.
+
+            // 2. Read Mapping: Entity to Read DTO
+            CreateMap<TPLEmployee_Training, TPLEmployeeTrainingReadDTO>();
+
+            // 3. Update Mapping: DTO to Entity (for score/status updates)
+            CreateMap<TPLEmployeeTrainingUpdateDTO, TPLEmployee_Training>()
+                // Ignore the PKs because they are used for finding the record, not updating the key itself
+                .ForMember(dest => dest.EmployeeID, opt => opt.Ignore())
+                .ForMember(dest => dest.TrainingID, opt => opt.Ignore())
+                // This mapping allows the partial update of Score and CompletionStatus
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null)); // Apply changes only if the source value is not null
+
+            // =========================================================================
+            // 17. TPLProject MAPPINGS (Master Data) 
+            // =========================================================================
+            CreateMap<TPLProjectCreateDTO, TPLProject>()
+                .ForMember(dest => dest.ProjectID, opt => opt.Ignore());
+
+            CreateMap<TPLProjectUpdateDTO, TPLProject>();
+
+            CreateMap<TPLProject, TPLProjectReadDTO>();
+
+            // =========================================================================
+            // 18. TPLProjectAssignment MAPPINGS (Junction Table) 
+            // =========================================================================
+            CreateMap<TPLProjectAssignmentCreateDTO, TPLProject_Assignment>()
+               .ForMember(dest => dest.assignment_id, opt => opt.Ignore())
+               .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<TPLProjectAssignmentUpdateDTO, TPLProject_Assignment>();
+            CreateMap<TPLProject_Assignment, TPLProjectAssignmentReadDTO>();
+
+            // =========================================================================
+            // 19. TPLSelfServiceRequest MAPPINGS
+            // =========================================================================
+            CreateMap<SelfServiceRequestCreateDto, TPLSelfServiceRequest>()
+                .ForMember(dest => dest.RequestID, opt => opt.Ignore());
+            CreateMap<SelfServiceRequestUpdateDto, TPLSelfServiceRequest>();
+            CreateMap<TPLSelfServiceRequest, SelfServiceRequestReadDto>();
+
+            // =========================================================================
+            // 20. TPLDocumentManagement MAPPINGS
+            // =========================================================================
+            CreateMap<DocumentManagementCreateDto, TPLDocumentManagement>()
+                .ForMember(dest => dest.DocumentID, opt => opt.Ignore());
+            CreateMap<DocumentManagementUpdateDto, TPLDocumentManagement>();
+            CreateMap<TPLDocumentManagement, DocumentManagementReadDto>();
+
+            // =========================================================================
+            // 21. TPLBenefitsCompensation MAPPINGS
+            // =========================================================================
+            CreateMap<BenefitsCompensationCreateDto, TPLBenefitsCompensation>()
+                .ForMember(dest => dest.BenefitID, opt => opt.Ignore());
+            CreateMap<BenefitsCompensationUpdateDto, TPLBenefitsCompensation>();
+            CreateMap<TPLBenefitsCompensation, BenefitsCompensationReadDto>();
+
+            // =========================================================================
+            // 22. LkpBenefitType MAPPINGS
+            // =========================================================================
+            CreateMap<BenefitTypeCreateDto, LkpBenefitType>()
+                .ForMember(dest => dest.BenefitTypeID, opt => opt.Ignore());
+            CreateMap<BenefitTypeUpdateDto, LkpBenefitType>();
+            CreateMap<LkpBenefitType, BenefitTypeReadDto>();
+
+            // =========================================================================
+            // 23. LKPSalary MAPPINGS
+            // =========================================================================
+            CreateMap<SalaryCreateDto, LKPSalary>()
+                .ForMember(dest => dest.SalaryID, opt => opt.Ignore());
+            CreateMap<SalaryUpdateDto, LKPSalary>();
+            CreateMap<LKPSalary, SalaryReadDto>();
+
+            // =========================================================================
+            // 24. TPLPerformanceEvaluation MAPPINGS
+            // =========================================================================
+            CreateMap<PerformanceEvaluationCreateDto, TPLPerformanceEvaluation>()
+                .ForMember(dest => dest.EvaluationID, opt => opt.Ignore());
+            CreateMap<PerformanceEvaluationUpdateDto, TPLPerformanceEvaluation>();
+            CreateMap<TPLPerformanceEvaluation, PerformanceEvaluationReadDto>();
+
+            // =========================================================================
+            // 25. TPLEvaluationCriterion MAPPINGS
+            // =========================================================================
+            CreateMap<EvaluationCriteriaCreateDto, TPLEvaluationCriterion>()
+                .ForMember(dest => dest.CriteriaID, opt => opt.Ignore());
+            CreateMap<EvaluationCriteriaUpdateDto, TPLEvaluationCriterion>();
+            CreateMap<TPLEvaluationCriterion, EvaluationCriteriaReadDto>();
+
+            // =========================================================================
+            // 26. TPLSurvey MAPPINGS
+            // =========================================================================
+            CreateMap<SurveyCreateDto, TPLSurvey>()
+                .ForMember(dest => dest.SurveyID, opt => opt.Ignore());
+            CreateMap<SurveyUpdateDto, TPLSurvey>();
+            CreateMap<TPLSurvey, SurveyReadDto>();
+
+            // =========================================================================
+            // 27. TPLSurvey_Response MAPPINGS
+            // =========================================================================
+            CreateMap<SurveyResponseCreateDto, TPLSurvey_Response>()
+                .ForMember(dest => dest.ResponseID, opt => opt.Ignore());
+            CreateMap<SurveyResponseUpdateDto, TPLSurvey_Response>();
+            CreateMap<TPLSurvey_Response, SurveyResponseReadDto>();
+
+            // =========================================================================
+            // 28. TPLJob MAPPINGS
+            // =========================================================================
+            CreateMap<JobCreateDto, TPLJob>()
+                .ForMember(dest => dest.JobID, opt => opt.Ignore());
+            CreateMap<JobUpdateDto, TPLJob>();
+            CreateMap<TPLJob, JobReadDto>();
+
+            // =========================================================================
+            // 29. TPLHRNeedRequest MAPPINGS
+            // =========================================================================
+            CreateMap<HRNeedRequestCreateDto, TPLHRNeedRequest>()
+                .ForMember(dest => dest.HRNeedID, opt => opt.Ignore());
+            CreateMap<HRNeedRequestUpdateDto, TPLHRNeedRequest>();
+            CreateMap<TPLHRNeedRequest, HRNeedRequestReadDto>();
+
+            // =========================================================================
+            // 30. TPLRecruitmentPortal MAPPINGS
+            // =========================================================================
+            CreateMap<RecruitmentPortalCreateDto, TPLRecruitmentPortal>()
+                .ForMember(dest => dest.PortalID, opt => opt.Ignore());
+            CreateMap<RecruitmentPortalUpdateDto, TPLRecruitmentPortal>();
+            CreateMap<TPLRecruitmentPortal, RecruitmentPortalReadDto>();
+
+            // =========================================================================
+            // 31. TPLCVBank MAPPINGS
+            // =========================================================================
+            CreateMap<CVBankCreateDto, TPLCVBank>()
+                .ForMember(dest => dest.CV_ID, opt => opt.Ignore());
+            CreateMap<CVBankUpdateDto, TPLCVBank>();
+            CreateMap<TPLCVBank, CVBankReadDto>();
+
+            // =========================================================================
+            // 32. LkpJobApplication MAPPINGS
+            // =========================================================================
+            CreateMap<JobApplicationCreateDto, LkpJobApplication>()
+                .ForMember(dest => dest.JobApplicationId, opt => opt.Ignore());
+            CreateMap<JobApplicationUpdateDto, LkpJobApplication>();
+            CreateMap<LkpJobApplication, JobApplicationReadDto>();
+
+            // =========================================================================
+            // 33. TPLCandidate MAPPINGS
+            // =========================================================================
+            CreateMap<CandidateCreateDto, TPLCandidate>()
+                .ForMember(dest => dest.CandidateID, opt => opt.Ignore());
+            CreateMap<CandidateUpdateDto, TPLCandidate>();
+            CreateMap<TPLCandidate, CandidateReadDto>();
+
+            // =========================================================================
+            // 34. TPLInterview MAPPINGS
+            // =========================================================================
+            CreateMap<InterviewCreateDto, TPLInterview>()
+                .ForMember(dest => dest.InterviewID, opt => opt.Ignore());
+            CreateMap<InterviewUpdateDto, TPLInterview>();
+            CreateMap<TPLInterview, InterviewReadDto>();
 
         }
     }

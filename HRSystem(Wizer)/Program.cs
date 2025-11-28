@@ -50,6 +50,9 @@ namespace HRSystem_Wizer_
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<ITokenService, TokenService>();
 
+            // Register Generic Repository (works for all entity types)
+            builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+
             // ---------------- JWT CONFIGURATION ----------------
 
 
