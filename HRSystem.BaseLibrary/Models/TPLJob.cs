@@ -21,7 +21,7 @@ public partial class TPLJob
 
     public int DepartmentID { get; set; }
 
-    public DateOnly PostedDate { get; set; }
+    public DateTime PostedDate { get; set; }
 
     [Required]
     [StringLength(50)]

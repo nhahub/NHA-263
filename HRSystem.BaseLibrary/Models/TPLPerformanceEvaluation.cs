@@ -15,7 +15,7 @@ public partial class TPLPerformanceEvaluation
 
     public int EmployeeID { get; set; }
 
-    public DateOnly Date { get; set; }
+    public DateTime Date { get; set; }
 
     public int Score { get; set; }
 

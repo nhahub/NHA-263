@@ -17,12 +17,16 @@ public partial class TPLBenefitsCompensation
 
     public int BenefitTypeID { get; set; }
 
-    public DateOnly StartDate { get; set; }
+    public DateTime StartDate { get; set; }
 
-    public DateOnly? EndDate { get; set; }
+    public DateTime? EndDate { get; set; }
 
     [Column(TypeName = "decimal(10, 2)")]
     public decimal? Value { get; set; }
+
+    public DateTime CreatedDate { get; set; }
+    public DateTime? UpdatedDate { get; set; }
+    public bool isDeleted { get; set; }
 
     [ForeignKey("BenefitTypeID")]
     [InverseProperty("TPLBenefitsCompensations")]

@@ -15,9 +15,9 @@ public partial class TPLRecruitmentPortal
 
     public int HRNeedID { get; set; }
 
-    public DateOnly PublishDate { get; set; }
+    public DateTime PublishDate { get; set; }
 
-    public DateOnly ExpiryDate { get; set; }
+    public DateTime ExpiryDate { get; set; }
 
     [StringLength(200)]
     public string Notes { get; set; }

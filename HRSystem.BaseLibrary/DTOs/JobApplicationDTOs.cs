@@ -12,7 +12,7 @@ namespace HRSystem.BaseLibrary.DTOs
         public int JobID { get; set; }
         public string Name { get; set; }
         public string Email { get; set; }
-        public int Phone { get; set; }
+        public string Phone { get; set; }
         public string CVFile { get; set; }
         public string Status { get; set; }
         public DateTime ApplyDate { get; set; }
@@ -35,7 +35,7 @@ namespace HRSystem.BaseLibrary.DTOs
         public string Email { get; set; }
 
         [Required(ErrorMessage = "Phone is required.")]
-        public int Phone { get; set; }
+        public string Phone { get; set; }
 
         [Required(ErrorMessage = "CV File is required.")]
         [StringLength(100)]
@@ -70,7 +70,7 @@ namespace HRSystem.BaseLibrary.DTOs
         public string Email { get; set; }
 
         [Required(ErrorMessage = "Phone is required.")]
-        public int Phone { get; set; }
+        public string Phone { get; set; }
 
         [Required(ErrorMessage = "CV File is required.")]
         [StringLength(100)]

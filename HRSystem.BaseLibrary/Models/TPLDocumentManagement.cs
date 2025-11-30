@@ -19,9 +19,9 @@ public partial class TPLDocumentManagement
     [StringLength(100)]
     public string DocumentType { get; set; }
 
-    public DateOnly UploadDate { get; set; }
+    public DateTime UploadDate { get; set; }
 
-    public DateOnly ExpiryDate { get; set; }
+    public DateTime ExpiryDate { get; set; }
 
     [Required]
     [StringLength(200)]

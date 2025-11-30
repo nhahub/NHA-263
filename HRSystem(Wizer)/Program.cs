@@ -29,7 +29,10 @@ namespace HRSystem_Wizer_
             //injection of DB Context
             builder.Services.AddDbContext<HRSystemContext>(options =>
             {
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"), sqlOptions =>
+                {
+                    sqlOptions.EnableRetryOnFailure();
+                });
             });
 
             builder.Services.AddAutoMapper((typeof(HRMappingProfile).Assembly));

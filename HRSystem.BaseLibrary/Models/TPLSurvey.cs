@@ -19,7 +19,7 @@ public partial class TPLSurvey
 
     public string Description { get; set; }
 
-    public DateOnly CreatedDate { get; set; }
+    public DateTime CreatedDate { get; set; }
 
     [InverseProperty("Survey")]
     public virtual ICollection<TPLSurvey_Response> TPLSurvey_Responses { get; set; } = new List<TPLSurvey_Response>();

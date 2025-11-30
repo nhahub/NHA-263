@@ -15,7 +15,7 @@ public partial class TPLInterview
 
     public int CandidateID { get; set; }
 
-    public DateOnly Date { get; set; }
+    public DateTime Date { get; set; }
 
     [Required]
     [StringLength(50)]

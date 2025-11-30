@@ -18,7 +18,7 @@ public partial class TPLSelfServiceRequest
     [StringLength(100)]
     public string RequestType { get; set; }
 
-    public DateOnly RequestDate { get; set; }
+    public DateTime RequestDate { get; set; }
 
     [Required]
     [StringLength(50)]
