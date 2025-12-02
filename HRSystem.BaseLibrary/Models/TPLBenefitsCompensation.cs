@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -24,9 +24,6 @@ public partial class TPLBenefitsCompensation
     [Column(TypeName = "decimal(10, 2)")]
     public decimal? Value { get; set; }
 
-    public DateTime CreatedDate { get; set; }
-    public DateTime? UpdatedDate { get; set; }
-    public bool isDeleted { get; set; }
 
     [ForeignKey("BenefitTypeID")]
     [InverseProperty("TPLBenefitsCompensations")]
