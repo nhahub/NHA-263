@@ -1,13 +1,16 @@
-using AutoMapper;
+﻿using AutoMapper;
 using HRSystem.BaseLibrary.DTOs;
 using HRSystem.BaseLibrary.Models;
 using HRSystem.Infrastructure.Contracts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace HRSystem_Wizer_.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class SelfServiceRequestController : ControllerBase
     {
         private readonly IGenericRepository<TPLSelfServiceRequest> _repository;
@@ -21,6 +24,7 @@ namespace HRSystem_Wizer_.Controllers
 
         // GET: api/SelfServiceRequest
         [HttpGet]
+        [Authorize(Roles = "admin,HR")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SelfServiceRequestReadDto>))]
         public async Task<IActionResult> GetAll()
         {
@@ -44,6 +48,19 @@ namespace HRSystem_Wizer_.Controllers
         {
             try
             {
+                var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+                var loggedInEmployeeIdClaim = User.FindFirst("EmployeeID")?.Value;
+
+                // نحتاج فقط لتنفيذ هذا الفحص إذا لم يكن المستخدم admin أو HR
+                if (userRole != "admin" && userRole != "HR")
+                {
+                    // إذا كان المستخدم ليس مديراً، يجب أن يكون ID المطلوب هو IDه الخاص
+                    if (loggedInEmployeeIdClaim == null || int.Parse(loggedInEmployeeIdClaim) != id)
+                    {
+                        // منع الوصول: الموظف العادي يحاول رؤية ملف زميله
+                        return Forbid(); // 403 Forbidden
+                    }
+                }
                 var entity = await _repository.GetByIdAsync(id);
                 if (entity == null)
                 {
@@ -61,6 +78,7 @@ namespace HRSystem_Wizer_.Controllers
 
         // POST: api/SelfServiceRequest
         [HttpPost]
+        [Authorize(Roles = "admin,HR")]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(SelfServiceRequestReadDto))]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Create([FromBody] SelfServiceRequestCreateDto dto)
@@ -87,6 +105,7 @@ namespace HRSystem_Wizer_.Controllers
 
         // PUT: api/SelfServiceRequest/5
         [HttpPut("{id}")]
+        [Authorize(Roles = "admin,HR")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -124,6 +143,7 @@ namespace HRSystem_Wizer_.Controllers
 
         // DELETE: api/SelfServiceRequest/5
         [HttpDelete("{id}")]
+        [Authorize(Roles = "admin")] 
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(int id)

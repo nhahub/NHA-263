@@ -1,13 +1,16 @@
-using AutoMapper;
+﻿using AutoMapper;
 using HRSystem.BaseLibrary.DTOs;
 using HRSystem.BaseLibrary.Models;
 using HRSystem.Infrastructure.Contracts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace HRSystem_Wizer_.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class DocumentManagementController : ControllerBase
     {
         private readonly IGenericRepository<TPLDocumentManagement> _repository;
@@ -20,6 +23,7 @@ namespace HRSystem_Wizer_.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "admin,HR")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<DocumentManagementReadDto>))]
         public async Task<IActionResult> GetAll()
         {
@@ -36,12 +40,14 @@ namespace HRSystem_Wizer_.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "admin,HR")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DocumentManagementReadDto))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetById(int id)
         {
             try
             {
+                
                 var entity = await _repository.GetByIdAsync(id);
                 if (entity == null)
                 {
@@ -56,8 +62,46 @@ namespace HRSystem_Wizer_.Controllers
                 return StatusCode(500, $"An error occurred: {ex.Message}");
             }
         }
+        // ====================== 3. GET BY EMPLOYEE ID (القراءة حسب الموظف) ======================
+        [HttpGet("employee/{employeeId}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<DocumentManagementReadDto>))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetByEmployeeId(int employeeId)
+        {
+            try
+            {
+                var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+                var loggedInEmployeeIdClaim = User.FindFirst("EmployeeID")?.Value;
+
+                // نحتاج فقط لتنفيذ هذا الفحص إذا لم يكن المستخدم admin أو HR
+                if (userRole != "admin" && userRole != "HR")
+                {
+                    // إذا كان المستخدم ليس مديراً، يجب أن يكون ID المطلوب هو IDه الخاص
+                    if (loggedInEmployeeIdClaim == null || int.Parse(loggedInEmployeeIdClaim) != id)
+                    {
+                        // منع الوصول: الموظف العادي يحاول رؤية ملف زميله
+                        return Forbid(); // 403 Forbidden
+                    }
+                }
+                var entities = await _repository.FindAsync(d => d.EmployeeID == employeeId);
+
+                if (entities == null || !entities.Any())
+                {
+                    // العودة بـ 404 إذا لم يتم العثور على أي وثائق للموظف المحدد
+                    return NotFound(new { Message = $"No documents found for Employee ID {employeeId}." });
+                }
+
+                var dtos = _mapper.Map<IEnumerable<DocumentManagementReadDto>>(entities);
+                return Ok(dtos);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
+        }
 
         [HttpPost]
+        [Authorize(Roles = "admin,HR")]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(DocumentManagementReadDto))]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Create([FromBody] DocumentManagementCreateDto dto)
@@ -83,6 +127,7 @@ namespace HRSystem_Wizer_.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "admin,HR"]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -119,6 +164,7 @@ namespace HRSystem_Wizer_.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "admin")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(int id)

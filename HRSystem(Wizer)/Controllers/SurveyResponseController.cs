@@ -2,12 +2,14 @@ using AutoMapper;
 using HRSystem.BaseLibrary.DTOs;
 using HRSystem.BaseLibrary.Models;
 using HRSystem.Infrastructure.Contracts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HRSystem_Wizer_.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class SurveyResponseController : ControllerBase
     {
         private readonly IGenericRepository<TPLSurvey_Response> _repository;
@@ -20,6 +22,7 @@ namespace HRSystem_Wizer_.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "admin,HR")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<SurveyResponseReadDto>))]
         public async Task<IActionResult> GetAll()
         {
@@ -36,6 +39,7 @@ namespace HRSystem_Wizer_.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "admin,HR")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(SurveyResponseReadDto))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetById(int id)
@@ -58,6 +62,7 @@ namespace HRSystem_Wizer_.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "admin,HR,Employee")]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(SurveyResponseReadDto))]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Create([FromBody] SurveyResponseCreateDto dto)
@@ -83,6 +88,7 @@ namespace HRSystem_Wizer_.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "admin,HR")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -119,6 +125,7 @@ namespace HRSystem_Wizer_.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "admin")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(int id)

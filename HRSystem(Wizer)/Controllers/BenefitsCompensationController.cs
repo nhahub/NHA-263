@@ -2,12 +2,14 @@ using AutoMapper;
 using HRSystem.BaseLibrary.DTOs;
 using HRSystem.BaseLibrary.Models;
 using HRSystem.Infrastructure.Contracts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HRSystem_Wizer_.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "admin,HR")]
     public class BenefitsCompensationController : ControllerBase
     {
         private readonly IGenericRepository<TPLBenefitsCompensation> _repository;
@@ -83,6 +85,7 @@ namespace HRSystem_Wizer_.Controllers
         }
 
         [HttpPut("{id}")]
+        
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -119,6 +122,7 @@ namespace HRSystem_Wizer_.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "admin")] 
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(int id)
