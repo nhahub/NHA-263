@@ -48,8 +48,8 @@ namespace HRSystem_Wizer_
             builder.Services.AddScoped<ILKPLeaveTypeRepository, LKPLeaveTypeRepository>();
             builder.Services.AddScoped<ITPLEmployeeRepository, TPLEmployeeRepository>();
             builder.Services.AddScoped<ILeaveManagementService, LeaveManagementService>();
-           
-           // Register 16 entities' repositories for DI (already present or to be plugged in)
+
+            // Register 16 entities' repositories for DI (already present or to be plugged in)
             builder.Services.AddScoped<ISelfServiceRequestRepository, SelfServiceRequestRepository>();
             builder.Services.AddScoped<IDocumentManagementRepository, DocumentManagementRepository>();
             builder.Services.AddScoped<IBenefitsCompensationRepository, BenefitsCompensationRepository>();
@@ -66,16 +66,16 @@ namespace HRSystem_Wizer_
             builder.Services.AddScoped<IJobApplicationRepository, JobApplicationRepository>();
             builder.Services.AddScoped<ICandidateRepository, CandidateRepository>();
             builder.Services.AddScoped<IInterviewRepository, InterviewRepository>();
-            
+
             // Add services to the container.
             builder.Services.AddControllers();
 
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<ITokenService, TokenService>();
-            
+
             // Register Generic Repository (works for all entity types)
             builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-            
+
             // ---------------- JWT CONFIGURATION ----------------
 
 
@@ -101,7 +101,7 @@ namespace HRSystem_Wizer_
                 };
             });
 
-           
+
 
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
@@ -136,7 +136,7 @@ namespace HRSystem_Wizer_
             });
 
 
-                var app = builder.Build();
+            var app = builder.Build();
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {

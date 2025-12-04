@@ -17,7 +17,7 @@ public partial class HRSystemContext : DbContext
         : base(options)
     {
     }
-    
+
     public virtual DbSet<LKPLeaveType> LKPLeaveTypes { get; set; }
 
     public virtual DbSet<LKPPermissionType> LKPPermissionTypes { get; set; }
@@ -74,7 +74,7 @@ public partial class HRSystemContext : DbContext
 
     public virtual DbSet<TPLProject> TPLProjects { get; set; }
 
-    public virtual DbSet<TPLProject_Assignment> TPLProject_Assignments { get; set; }
+    public virtual DbSet<TPLProjectAssignment> TPLProject_Assignments { get; set; }
 
     public virtual DbSet<TPLRecruitmentPortal> TPLRecruitmentPortals { get; set; }
 
@@ -377,7 +377,7 @@ public partial class HRSystemContext : DbContext
             entity.HasOne(d => d.Manager).WithMany(p => p.TPLProjects).HasConstraintName("FK_TPLProject_Manager");
         });
 
-        modelBuilder.Entity<TPLProject_Assignment>(entity =>
+        modelBuilder.Entity<TPLProjectAssignment>(entity =>
         {
             entity.Property(e => e.assignment_id).ValueGeneratedOnAdd();
 
@@ -464,7 +464,7 @@ public partial class HRSystemContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_TPLUser_TPLEmployee");
         });
-        
+
 
         modelBuilder.Entity<RefreshToken>(entity =>
         {
