@@ -29,6 +29,27 @@ public class AssetManagementController : ControllerBase
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(TPLAssetManagementReadDTO))]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     [Authorize(Roles = "HR,admin")]
+    public async Task<IActionResult> AssignNewAsset([FromBody] TPLAssetManagementCreateDTO dto)
+    {
+        
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        // 2. التحويل من DTO إلى الكيان (Entity)
+        var entity = _mapper.Map<TPLAssetManagement>(dto);
+
+        // 3. إضافة الكيان إلى قاعدة البيانات
+        await _assetRepo.AddAsync(entity);
+        await _assetRepo.SaveChangesAsync(); // حفظ التغييرات
+
+        // 4. التحويل مرة أخرى إلى Read DTO للإرجاع
+        var readDto = _mapper.Map<TPLAssetManagementReadDTO>(entity);
+
+        // 5. الإرجاع مع مسار الوصول إلى العنصر المنشأ (Best Practice)
+        return CreatedAtAction(nameof(GetAssetById), new { id = readDto.AssetID }, readDto);
+    }
     // =========================================================================
     // GET: Get Asset by ID (READ SINGLE) - RETAINED FOR CREATEDATACTION
     // =========================================================================
