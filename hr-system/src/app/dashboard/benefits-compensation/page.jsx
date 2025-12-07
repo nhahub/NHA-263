@@ -30,13 +30,11 @@ export default function BenefitsCompensationPage() {
   const [isFormOpen, setIsFormOpen] = useState(false)
 
   const [formData, setFormData] = useState({
-    employeeId: "",
-    benefitTypeId: "",
-    amount: "",
+    employeeID: "",
+    benefitTypeID: "",
+    value: "",
     startDate: "",
     endDate: "",
-    description: "",
-    isActive: true,
   })
 
   useEffect(() => {
@@ -71,10 +69,57 @@ export default function BenefitsCompensationPage() {
         getAllEmployees(),
         getAllBenefitTypes(),
       ])
+      
+      // Log the full compensationsRes response for debugging
+      console.log("=== COMPENSATIONS RESPONSE ===")
+      console.log("Full compensationsRes:", compensationsRes)
+      console.log("Status:", compensationsRes.status)
+      if (compensationsRes.status === "fulfilled") {
+        console.log("Response value:", compensationsRes.value)
+        console.log("Response data:", compensationsRes.value?.data)
+        console.log("Data type:", typeof compensationsRes.value?.data)
+        console.log("Is array:", Array.isArray(compensationsRes.value?.data))
+        if (compensationsRes.value?.data) {
+          console.log("Data length:", compensationsRes.value.data.length)
+          if (compensationsRes.value.data.length > 0) {
+            console.log("First compensation record:", compensationsRes.value.data[0])
+            console.log("First record keys:", Object.keys(compensationsRes.value.data[0]))
+          }
+        }
+      } else {
+        console.log("Error reason:", compensationsRes.reason)
+        console.log("Error response:", compensationsRes.reason?.response)
+        console.log("Error data:", compensationsRes.reason?.response?.data)
+      }
+      console.log("=============================")
 
       // Handle compensations result
       if (compensationsRes.status === "fulfilled") {
-        setBenefitsCompensations(Array.isArray(compensationsRes.value.data) ? compensationsRes.value.data : [])
+        // Handle different response structures
+        let compensationsList = []
+        const responseData = compensationsRes.value
+        
+        if (Array.isArray(responseData?.data)) {
+          compensationsList = responseData.data
+        } else if (Array.isArray(responseData)) {
+          compensationsList = responseData
+        } else if (Array.isArray(responseData?.result)) {
+          compensationsList = responseData.result
+        } else if (responseData?.data && typeof responseData.data === 'object') {
+          // If data is an object, try to extract array from it
+          const dataObj = responseData.data
+          if (Array.isArray(dataObj.items)) {
+            compensationsList = dataObj.items
+          } else if (Array.isArray(dataObj.data)) {
+            compensationsList = dataObj.data
+          } else if (Array.isArray(dataObj.results)) {
+            compensationsList = dataObj.results
+          }
+        }
+        
+        console.log("Final compensations list:", compensationsList)
+        console.log("Compensations count:", compensationsList.length)
+        setBenefitsCompensations(compensationsList)
       } else {
         console.error("Failed to fetch compensations:", compensationsRes.reason)
         setBenefitsCompensations([])
@@ -115,13 +160,11 @@ export default function BenefitsCompensationPage() {
 
   const resetForm = () => {
     setFormData({
-      employeeId: "",
-      benefitTypeId: "",
-      amount: "",
+      employeeID: "",
+      benefitTypeID: "",
+      value: "",
       startDate: "",
       endDate: "",
-      description: "",
-      isActive: true,
     })
     setSelectedCompensation(null)
   }
@@ -139,24 +182,58 @@ export default function BenefitsCompensationPage() {
     setIsSubmitting(true)
     setError("")
 
+    // Validate required fields
+    if (!formData.employeeID || isNaN(parseInt(formData.employeeID))) {
+      setError("Employee must be selected.")
+      setIsSubmitting(false)
+      return
+    }
+
+    if (!formData.benefitTypeID || isNaN(parseInt(formData.benefitTypeID))) {
+      setError("Benefit type must be selected.")
+      setIsSubmitting(false)
+      return
+    }
+
+    if (!formData.value || isNaN(parseFloat(formData.value)) || parseFloat(formData.value) < 0) {
+      setError("Value must be a valid non-negative number.")
+      setIsSubmitting(false)
+      return
+    }
+
+    if (!formData.startDate) {
+      setError("Start date is required.")
+      setIsSubmitting(false)
+      return
+    }
+
+    if (!formData.endDate) {
+      setError("End date is required.")
+      setIsSubmitting(false)
+      return
+    }
+
+    // Validate end date is after start date
+    if (new Date(formData.endDate) < new Date(formData.startDate)) {
+      setError("End date must be after start date.")
+      setIsSubmitting(false)
+      return
+    }
+
     try {
+      // Prepare data according to API schema
       const submitData = {
-        ...formData,
-        employeeId: formData.employeeId ? parseInt(formData.employeeId) : null,
-        benefitTypeId: formData.benefitTypeId ? parseInt(formData.benefitTypeId) : null,
-        amount: formData.amount ? parseFloat(formData.amount) : null,
+        employeeID: parseInt(formData.employeeID),
+        benefitTypeID: parseInt(formData.benefitTypeID),
+        startDate: new Date(formData.startDate).toISOString(),
+        endDate: new Date(formData.endDate).toISOString(),
+        value: parseFloat(formData.value),
       }
 
       if (selectedCompensation) {
-        const updateData = {
-          ...selectedCompensation,
-          ...submitData,
-        }
-        console.log("Updating benefits compensation with data:", updateData)
-        await updateBenefitsCompensation(
-          selectedCompensation.id || selectedCompensation.benefitsCompensationId,
-          updateData
-        )
+        const compensationId = selectedCompensation.id || selectedCompensation.benefitsCompensationId || selectedCompensation.benefitsCompensationID
+        console.log("Updating benefits compensation with data:", submitData)
+        await updateBenefitsCompensation(compensationId, submitData)
       } else {
         console.log("Creating benefits compensation with data:", submitData)
         await createBenefitsCompensation(submitData)
@@ -192,14 +269,26 @@ export default function BenefitsCompensationPage() {
   const handleEdit = (compensation) => {
     setSelectedCompensation(compensation)
     setIsFormOpen(true)
+    
+    // Format dates for input field (YYYY-MM-DD)
+    const formatDateForInput = (dateString) => {
+      if (!dateString) return ""
+      const date = new Date(dateString)
+      if (isNaN(date.getTime())) return ""
+      return date.toISOString().split('T')[0]
+    }
+    
+    // Extract values - try multiple possible field names
+    const employeeID = compensation.employeeID || compensation.employeeId || compensation.employee_id
+    const benefitTypeID = compensation.benefitTypeID || compensation.benefitTypeId || compensation.benefit_type_id
+    const value = compensation.value !== undefined ? compensation.value : (compensation.amount || compensation.amountValue)
+    
     setFormData({
-      employeeId: compensation.employeeId?.toString() || "",
-      benefitTypeId: compensation.benefitTypeId?.toString() || "",
-      amount: compensation.amount?.toString() || "",
-      startDate: compensation.startDate ? compensation.startDate.split("T")[0] : "",
-      endDate: compensation.endDate ? compensation.endDate.split("T")[0] : "",
-      description: compensation.description || "",
-      isActive: compensation.isActive !== undefined ? compensation.isActive : true,
+      employeeID: employeeID?.toString() || "",
+      benefitTypeID: benefitTypeID?.toString() || "",
+      value: value?.toString() || "",
+      startDate: formatDateForInput(compensation.startDate),
+      endDate: formatDateForInput(compensation.endDate),
     })
   }
 
@@ -314,96 +403,122 @@ export default function BenefitsCompensationPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-gray-700 bg-gray-800/50">
-                      <th className="py-4 px-6 text-left text-sm font-semibold text-gray-300">Employee</th>
-                      <th className="py-4 px-6 text-left text-sm font-semibold text-gray-300">Benefit Type</th>
-                      <th className="py-4 px-6 text-left text-sm font-semibold text-gray-300">Amount</th>
-                      <th className="py-4 px-6 text-left text-sm font-semibold text-gray-300">Start Date</th>
-                      <th className="py-4 px-6 text-left text-sm font-semibold text-gray-300">End Date</th>
-                      <th className="py-4 px-6 text-left text-sm font-semibold text-gray-300">Status</th>
+                      <th className="py-2 px-4 text-left text-sm font-semibold text-gray-300">Employee</th>
+                      <th className="py-2 px-4 text-left text-sm font-semibold text-gray-300">Benefit Type</th>
+                      <th className="py-2 px-4 text-left text-sm font-semibold text-gray-300">Amount</th>
+                      <th className="py-2 px-4 text-left text-sm font-semibold text-gray-300">Start Date</th>
+                      <th className="py-2 px-4 text-left text-sm font-semibold text-gray-300">End Date</th>
                       {canManage && (
-                        <th className="py-4 px-6 text-right text-sm font-semibold text-gray-300">Actions</th>
+                        <th className="py-2 px-4 text-right text-sm font-semibold text-gray-300">Actions</th>
                       )}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-700">
-                    {benefitsCompensations.map((comp, index) => (
-                      <tr
-                        key={comp.id || comp.benefitsCompensationId || `compensation-${index}`}
-                        className="hover:bg-gray-800/50 transition-colors duration-150"
-                      >
-                        <td className="py-4 px-6">
-                          <div className="font-medium text-white">
-                            {comp.employeeId ? getEmployeeName(comp.employeeId) : "-"}
-                          </div>
-                        </td>
-                        <td className="py-4 px-6">
-                          <span className="text-gray-300">
-                            {comp.benefitTypeId ? getBenefitTypeName(comp.benefitTypeId) : "-"}
-                          </span>
-                        </td>
-                        <td className="py-4 px-6">
-                          <span className="text-gray-300 font-medium">
-                            {comp.amount !== null && comp.amount !== undefined
-                              ? `$${parseFloat(comp.amount).toLocaleString("en-US", {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })}`
-                              : "-"}
-                          </span>
-                        </td>
-                        <td className="py-4 px-6">
-                          <span className="text-gray-300">
-                            {comp.startDate
-                              ? new Date(comp.startDate).toLocaleDateString()
-                              : "-"}
-                          </span>
-                        </td>
-                        <td className="py-4 px-6">
-                          <span className="text-gray-300">
-                            {comp.endDate
-                              ? new Date(comp.endDate).toLocaleDateString()
-                              : "-"}
-                          </span>
-                        </td>
-                        <td className="py-4 px-6">
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              comp.isActive !== false
-                                ? "bg-green-900/50 text-green-400 border border-green-700"
-                                : "bg-gray-700 text-gray-400 border border-gray-600"
-                            }`}
-                          >
-                            {comp.isActive !== false ? "Active" : "Inactive"}
-                          </span>
-                        </td>
-                        {canManage && (
-                          <td className="py-4 px-6">
-                            <div className="flex justify-end gap-2">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="h-7 px-3 text-xs border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white"
-                                onClick={() => handleEdit(comp)}
-                              >
-                                <FiEdit2 className="w-3.5 h-3.5 mr-1.5" />
-                                Edit
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="sm"
-                                className="h-7 px-3 text-xs bg-red-600 hover:bg-red-700 text-white"
-                                onClick={() => handleDelete(comp.id || comp.benefitsCompensationId)}
-                              >
-                                <FiTrash2 className="w-3.5 h-3.5 mr-1.5" />
-                                Delete
-                              </Button>
+                    {benefitsCompensations.map((comp, index) => {
+                      // Extract employee ID - try multiple possible field names
+                      const employeeId = comp.employeeID || comp.employeeId || comp.employee_id
+                      // Extract benefit type ID - try multiple possible field names
+                      const benefitTypeId = comp.benefitTypeID || comp.benefitTypeId || comp.benefit_type_id
+                      // Extract value - API uses "value" field
+                      const value = comp.value !== undefined ? comp.value : (comp.amount || comp.amountValue)
+                      // Extract dates - try multiple possible field names
+                      const startDate = comp.startDate || comp.start_date || comp.startDateValue
+                      const endDate = comp.endDate || comp.end_date || comp.endDateValue
+                      
+                      console.log(`Compensation ${index}:`, {
+                        fullRecord: comp,
+                        employeeId,
+                        benefitTypeId,
+                        value,
+                        startDate,
+                        endDate,
+                        allKeys: Object.keys(comp)
+                      })
+                      
+                      return (
+                        <tr
+                          key={comp.id || comp.benefitsCompensationId || comp.benefitsCompensationID || `compensation-${index}`}
+                          className="hover:bg-gray-800/50 transition-colors duration-150"
+                        >
+                          <td className="py-2 px-4">
+                            <div className="font-medium text-white">
+                              {employeeId ? getEmployeeName(employeeId) : (
+                                <span className="text-gray-500 italic">
+                                  {comp.employeeName || comp.employee_name || "No employee"}
+                                </span>
+                              )}
                             </div>
                           </td>
-                        )}
-                      </tr>
-                    ))}
+                          <td className="py-2 px-4">
+                            <span className="text-gray-300">
+                              {benefitTypeId ? getBenefitTypeName(benefitTypeId) : (
+                                <span className="text-gray-500 italic">
+                                  {comp.benefitTypeName || comp.benefit_type_name || comp.benefitType?.name || "No benefit type"}
+                                </span>
+                              )}
+                            </span>
+                          </td>
+                          <td className="py-2 px-4">
+                            <span className="text-gray-300 font-medium">
+                              {value !== null && value !== undefined
+                                ? `$${parseFloat(value).toLocaleString("en-US", {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  })}`
+                                : "-"}
+                            </span>
+                          </td>
+                          <td className="py-2 px-4">
+                            <span className="text-gray-300 text-sm">
+                              {startDate
+                                ? new Date(startDate).toLocaleDateString("en-US", {
+                                    year: "numeric",
+                                    month: "short",
+                                    day: "numeric",
+                                  })
+                                : "-"}
+                            </span>
+                          </td>
+                          <td className="py-2 px-4">
+                            <span className="text-gray-300 text-sm">
+                              {endDate
+                                ? new Date(endDate).toLocaleDateString("en-US", {
+                                    year: "numeric",
+                                    month: "short",
+                                    day: "numeric",
+                                  })
+                                : "-"}
+                            </span>
+                          </td>
+                          {canManage && (
+                            <td className="py-2 px-4">
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 px-3 text-xs border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white"
+                                  onClick={() => handleEdit(comp)}
+                                >
+                                  <FiEdit2 className="w-3.5 h-3.5 mr-1.5" />
+                                  Edit
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="sm"
+                                  className="h-7 px-3 text-xs bg-red-600 hover:bg-red-700 text-white"
+                                  onClick={() => handleDelete(comp.id || comp.benefitsCompensationId || comp.benefitsCompensationID)}
+                                >
+                                  <FiTrash2 className="w-3.5 h-3.5 mr-1.5" />
+                                  Delete
+                                </Button>
+                              </div>
+                            </td>
+                          )}
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -428,62 +543,66 @@ export default function BenefitsCompensationPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <Label htmlFor="employeeId" className="text-gray-300">Employee *</Label>
+                    <Label htmlFor="employeeID" className="text-gray-300">
+                      Employee <span className="text-red-400">*</span>
+                    </Label>
                     <select
-                      id="employeeId"
-                      name="employeeId"
-                      value={formData.employeeId}
+                      id="employeeID"
+                      name="employeeID"
+                      value={formData.employeeID}
                       onChange={handleChange}
                       required
                       className="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent"
                     >
                       <option value="">Select an employee</option>
-                      {employees.map((emp) => (
-                        <option
-                          key={emp.id || emp.employeeId}
-                          value={emp.id || emp.employeeId}
-                        >
-                          {`${emp.firstName || ""} ${emp.lastName || ""}`.trim() ||
-                            emp.name ||
-                            emp.email ||
-                            `Employee #${emp.id || emp.employeeId}`}
-                        </option>
-                      ))}
+                      {employees.map((emp) => {
+                        const empId = emp.id || emp.employeeId
+                        const empName = `${emp.firstName || ""} ${emp.lastName || ""}`.trim() || emp.name || emp.email || `Employee #${empId}`
+                        return (
+                          <option key={empId} value={empId}>
+                            {empName}
+                          </option>
+                        )
+                      })}
                     </select>
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="benefitTypeId" className="text-gray-300">Benefit Type *</Label>
+                    <Label htmlFor="benefitTypeID" className="text-gray-300">
+                      Benefit Type <span className="text-red-400">*</span>
+                    </Label>
                     <select
-                      id="benefitTypeId"
-                      name="benefitTypeId"
-                      value={formData.benefitTypeId}
+                      id="benefitTypeID"
+                      name="benefitTypeID"
+                      value={formData.benefitTypeID}
                       onChange={handleChange}
                       required
                       className="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent"
                     >
                       <option value="">Select a benefit type</option>
-                      {benefitTypes.map((bt) => (
-                        <option
-                          key={bt.id || bt.benefitTypeId}
-                          value={bt.id || bt.benefitTypeId}
-                        >
-                          {bt.name || `Benefit Type #${bt.id || bt.benefitTypeId}`}
-                        </option>
-                      ))}
+                      {benefitTypes.map((bt) => {
+                        const btId = bt.id || bt.benefitTypeId || bt.benefitTypeID
+                        return (
+                          <option key={btId} value={btId}>
+                            {bt.name || `Benefit Type #${btId}`}
+                          </option>
+                        )
+                      })}
                     </select>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-1">
-                    <Label htmlFor="amount" className="text-gray-300">Amount *</Label>
+                    <Label htmlFor="value" className="text-gray-300">
+                      Value <span className="text-red-400">*</span>
+                    </Label>
                     <Input
-                      id="amount"
-                      name="amount"
+                      id="value"
+                      name="value"
                       type="number"
                       step="0.01"
                       min="0"
-                      value={formData.amount}
+                      value={formData.value}
                       onChange={handleChange}
                       required
                       placeholder="0.00"
@@ -491,53 +610,33 @@ export default function BenefitsCompensationPage() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="startDate" className="text-gray-300">Start Date</Label>
+                    <Label htmlFor="startDate" className="text-gray-300">
+                      Start Date <span className="text-red-400">*</span>
+                    </Label>
                     <Input
                       id="startDate"
                       name="startDate"
                       type="date"
                       value={formData.startDate}
                       onChange={handleChange}
+                      required
                       className="bg-gray-700 border-gray-600 text-white focus:border-cyan-400"
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="endDate" className="text-gray-300">End Date</Label>
+                    <Label htmlFor="endDate" className="text-gray-300">
+                      End Date <span className="text-red-400">*</span>
+                    </Label>
                     <Input
                       id="endDate"
                       name="endDate"
                       type="date"
                       value={formData.endDate}
                       onChange={handleChange}
+                      required
                       className="bg-gray-700 border-gray-600 text-white focus:border-cyan-400"
                     />
                   </div>
-                </div>
-
-                <div className="space-y-1">
-                  <Label htmlFor="description" className="text-gray-300">Description</Label>
-                  <Input
-                    id="description"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    placeholder="Additional notes or description"
-                    className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 focus:border-cyan-400"
-                  />
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="isActive"
-                    name="isActive"
-                    checked={formData.isActive}
-                    onChange={handleChange}
-                    className="w-4 h-4 text-cyan-400 border-gray-600 rounded focus:ring-cyan-400 bg-gray-700"
-                  />
-                  <Label htmlFor="isActive" className="cursor-pointer text-gray-300">
-                    Active (Compensation is currently active)
-                  </Label>
                 </div>
 
                 <div className="flex justify-end gap-2 pt-2">

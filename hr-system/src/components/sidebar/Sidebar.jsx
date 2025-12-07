@@ -19,8 +19,19 @@ import {
   FiLogOut,
   FiMenu,
   FiX,
+  FiFileText,
+  FiClipboard,
+  FiMessageSquare,
+  FiGlobe,
+  FiTrendingUp,
+  FiFile,
+  FiCheckSquare,
+  FiClock,
+  FiTag,
+  FiUserCheck,
 } from "react-icons/fi"
 import { cn } from "@/lib/utils"
+import { logout as logoutApi } from "@/lib/api"
 
 export default function Sidebar() {
   const pathname = usePathname()
@@ -47,8 +58,15 @@ export default function Sidebar() {
       title: "Dashboard",
       href: "/dashboard",
       icon: FiHome,
-      available: isAdmin || isHR,
+      available: true, // Available to all authenticated users (admin, HR, Employee)
     },
+    {
+      title: "My Profile",
+      href: "/dashboard/my-profile",
+      icon: FiUser,
+      available: isEmployee, // Only for employees
+    },
+    // Admin/HR only pages
     {
       title: "Company Profiles",
       href: "/dashboard/company-profiles",
@@ -77,7 +95,81 @@ export default function Sidebar() {
       title: "Projects",
       href: "/dashboard/projects",
       icon: FiLayers,
-      available: isAdmin || isHR || isEmployee,
+      available: isAdmin || isHR,
+    },
+    // Employee accessible pages (GET only)
+    {
+      title: "Project Assignments",
+      href: "/dashboard/project-assignments",
+      icon: FiBriefcase,
+      available: true, // Employee: GET only
+    },
+    {
+      title: "Asset Management",
+      href: "/dashboard/asset-management",
+      icon: FiPackage,
+      available: true, // Employee: GET only
+    },
+    {
+      title: "Documents",
+      href: "/dashboard/documents",
+      icon: FiFolder,
+      available: true, // Employee: GET only
+    },
+    {
+      title: "Leave Balances",
+      href: "/dashboard/leave-balances",
+      icon: FiCalendar,
+      available: true, // Employee: GET only
+    },
+    {
+      title: "Leave Logs",
+      href: "/dashboard/leave-logs",
+      icon: FiFileText,
+      available: true, // Employee: GET only
+    },
+    {
+      title: "Leave Requests",
+      href: "/dashboard/leave-requests",
+      icon: FiCheckSquare,
+      available: true, // Employee: POST only (create)
+    },
+    {
+      title: "Permission Requests",
+      href: "/dashboard/permission-requests",
+      icon: FiClock,
+      available: true, // Employee: GET only
+    },
+    {
+      title: "Salaries",
+      href: "/dashboard/salaries",
+      icon: FiDollarSign,
+      available: true, // Employee: GET only
+    },
+    {
+      title: "Self Service Requests",
+      href: "/dashboard/self-service-requests",
+      icon: FiFileText,
+      available: true, // Employee: GET only
+    },
+    {
+      title: "Survey Responses",
+      href: "/dashboard/survey-responses",
+      icon: FiMessageSquare,
+      available: true, // Employee: POST only (create)
+    },
+    // Admin/HR only pages (continued)
+    {
+      title: "Onboarding",
+      href: "/dashboard/onboarding",
+      icon: FiUserCheck,
+      available: isAdmin || isHR,
+    },
+    {
+      title: "Offboarding",
+      href: "/dashboard/offboarding",
+      icon: FiLogOut,
+      available: isAdmin || isHR,
     },
     {
       title: "Training",
@@ -104,9 +196,81 @@ export default function Sidebar() {
       available: isAdmin || isHR,
     },
     {
+      title: "Surveys",
+      href: "/dashboard/surveys",
+      icon: FiClipboard,
+      available: isAdmin || isHR,
+    },
+    {
+      title: "Recruitment Portals",
+      href: "/dashboard/recruitment-portals",
+      icon: FiGlobe,
+      available: isAdmin || isHR,
+    },
+    {
+      title: "Performance Evaluations",
+      href: "/dashboard/performance-evaluations",
+      icon: FiTrendingUp,
+      available: isAdmin || isHR,
+    },
+    {
+      title: "CV Bank",
+      href: "/dashboard/cv-bank",
+      icon: FiFile,
+      available: isAdmin || isHR,
+    },
+    {
+      title: "HR Need Requests",
+      href: "/dashboard/hr-need-requests",
+      icon: FiUsers,
+      available: isAdmin || isHR,
+    },
+    {
+      title: "Interviews",
+      href: "/dashboard/interviews",
+      icon: FiCalendar,
+      available: isAdmin || isHR,
+    },
+    {
+      title: "Evaluation Criteria",
+      href: "/dashboard/evaluation-criteria",
+      icon: FiCheckSquare,
+      available: isAdmin || isHR,
+    },
+    {
+      title: "Candidates",
+      href: "/dashboard/candidates",
+      icon: FiUser,
+      available: isAdmin || isHR,
+    },
+    {
+      title: "Jobs",
+      href: "/dashboard/jobs",
+      icon: FiBriefcase,
+      available: isAdmin || isHR,
+    },
+    {
+      title: "Job Applications",
+      href: "/dashboard/job-applications",
+      icon: FiClipboard,
+      available: isAdmin || isHR,
+    },
+    {
+      title: "Permission Types",
+      href: "/dashboard/permission-types",
+      icon: FiTag,
+      available: isAdmin || isHR,
+    },
+    {
       title: "Attendance",
       href: "/dashboard/attendance",
-      icon: FiCalendar,
+      icon: FiClock,
+      available: true, // Available to all authenticated users (check-in/check-out for all, view records for Admin/HR)
+    },
+    {
+      title: "Leave Types",
+      href: "/dashboard/leave-types",
+      icon: FiTag,
       available: isAdmin || isHR,
     },
     {
@@ -117,9 +281,18 @@ export default function Sidebar() {
     },
   ]
 
-  const handleLogout = () => {
-    localStorage.clear()
-    router.push("/login")
+  const handleLogout = async () => {
+    try {
+      // Call logout API endpoint
+      await logoutApi()
+    } catch (err) {
+      // Even if logout API fails, we still want to clear local storage and redirect
+      console.error("Logout API error:", err)
+    } finally {
+      // Clear local storage and redirect regardless of API call result
+      localStorage.clear()
+      router.push("/login")
+    }
   }
 
   const filteredMenuItems = menuItems.filter((item) => item.available)

@@ -15,24 +15,48 @@ import {
   Cell,
 } from "recharts"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
+import {
+  getAllEmployees,
+  getAllCompanyProfiles,
+  getAllHRDepartments,
+  getAllProjects,
+  getAllPerformanceEvaluations,
+  getAllTrainings,
+  getAllOnboarding,
+  getAllOffboarding,
+} from "@/lib/api"
 
 export default function DashboardPage() {
   const router = useRouter()
   const [role, setRole] = useState("")
   const [username, setUsername] = useState("")
+  const [employeeId, setEmployeeId] = useState("")
+  const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({
     totalEmployees: 0,
     totalCompanies: 0,
     totalDepartments: 0,
-    attendanceRate: 0,
+    totalProjects: 0,
+    totalPerformanceEvaluations: 0,
+    totalOnboarding: 0,
+    totalOffboarding: 0,
+    totalTrainings: 0,
+  })
+  const [chartData, setChartData] = useState({
+    lineChartData: [],
+    barChartData: [],
+    progressData: [],
+    pieData: [],
   })
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const userRole = localStorage.getItem("role")
       const userName = localStorage.getItem("username")
+      const currentEmployeeId = localStorage.getItem("employeeId")
       setRole(userRole || "")
       setUsername(userName || "")
+      setEmployeeId(currentEmployeeId || "")
 
       if (!userRole) {
         router.push("/login")
@@ -44,13 +68,216 @@ export default function DashboardPage() {
   }, [router])
 
   const fetchDashboardStats = async () => {
-    // TODO: Replace with actual API calls
-    setStats({
-      totalEmployees: 1544,
-      totalCompanies: 2487,
-      totalDepartments: 1544,
-      attendanceRate: 87,
+    try {
+      setLoading(true)
+      
+      const isEmployee = role === "Employee"
+      
+      // For employees, we'll show a simplified dashboard with their own data
+      // For admin/HR, show full dashboard stats
+      if (isEmployee) {
+        // Employees see their own profile and limited stats
+        // We'll fetch their employee data and show a personalized view
+        try {
+          if (employeeId) {
+            const { getEmployeeById } = await import("@/lib/api")
+            const { data: employeeData } = await getEmployeeById(employeeId)
+            
+            setStats({
+              totalEmployees: 1, // Just themselves
+              totalCompanies: 0,
+              totalDepartments: 1,
+              totalProjects: 0,
+              totalPerformanceEvaluations: 0,
+              totalOnboarding: 0,
+              totalOffboarding: 0,
+              totalTrainings: 0,
+            })
+            
+            setChartData({
+              lineChartData: [],
+              barChartData: [],
+              progressData: [
+                { 
+                  label: "Profile Complete", 
+                  value: 75, 
+                  color: "from-blue-500 to-cyan-500" 
+                },
+              ],
+              pieData: [
+                { name: "Active", value: 100, color: "#ec4899" },
+              ],
+            })
+          }
+        } catch (err) {
+          console.error("Failed to fetch employee data:", err)
+        }
+      } else {
+        // Admin/HR: Fetch all data in parallel
+        const [
+          employeesRes,
+          companiesRes,
+          departmentsRes,
+          projectsRes,
+          performanceRes,
+          onboardingRes,
+          offboardingRes,
+          trainingsRes,
+        ] = await Promise.allSettled([
+          getAllEmployees(),
+          getAllCompanyProfiles(),
+          getAllHRDepartments(),
+          getAllProjects(),
+          getAllPerformanceEvaluations(),
+          getAllOnboarding(),
+          getAllOffboarding(),
+          getAllTrainings(),
+        ])
+
+        // Extract counts from responses
+        const employees = employeesRes.status === "fulfilled" 
+        ? (Array.isArray(employeesRes.value.data) ? employeesRes.value.data : [])
+        : []
+      
+      const companies = companiesRes.status === "fulfilled"
+        ? (Array.isArray(companiesRes.value.data) ? companiesRes.value.data : [])
+        : []
+      
+      const departments = departmentsRes.status === "fulfilled"
+        ? (Array.isArray(departmentsRes.value.data) ? departmentsRes.value.data : [])
+        : []
+      
+      const projects = projectsRes.status === "fulfilled"
+        ? (Array.isArray(projectsRes.value.data) ? projectsRes.value.data : [])
+        : []
+      
+      const performances = performanceRes.status === "fulfilled"
+        ? (Array.isArray(performanceRes.value.data) ? performanceRes.value.data : [])
+        : []
+      
+      const onboarding = onboardingRes.status === "fulfilled"
+        ? (Array.isArray(onboardingRes.value.data) ? onboardingRes.value.data : [])
+        : []
+      
+      const offboarding = offboardingRes.status === "fulfilled"
+        ? (Array.isArray(offboardingRes.value.data) ? offboardingRes.value.data : [])
+        : []
+      
+      const trainings = trainingsRes.status === "fulfilled"
+        ? (Array.isArray(trainingsRes.value.data) ? trainingsRes.value.data : [])
+        : []
+
+      // Calculate stats
+      setStats({
+        totalEmployees: employees.length,
+        totalCompanies: companies.length,
+        totalDepartments: departments.length,
+        totalProjects: projects.length,
+        totalPerformanceEvaluations: performances.length,
+        totalOnboarding: onboarding.length,
+        totalOffboarding: offboarding.length,
+        totalTrainings: trainings.length,
+      })
+
+      // Calculate average performance score
+      const avgPerformance = performances.length > 0
+        ? Math.round(
+            performances.reduce((sum, p) => sum + (p.score || 0), 0) / performances.length
+          )
+        : 0
+
+      // Generate chart data based on real data
+      // Monthly trends - using performance evaluations grouped by month
+      const monthlyData = generateMonthlyTrends(performances)
+      setChartData({
+        lineChartData: monthlyData,
+        barChartData: generateDailyActivity(employees, projects),
+        progressData: [
+          { 
+            label: "Employee Growth", 
+            value: calculateGrowthPercentage(employees.length, 100), 
+            color: "from-blue-500 to-cyan-500" 
+          },
+          { 
+            label: "Department Efficiency", 
+            value: calculateGrowthPercentage(departments.length, 50), 
+            color: "from-orange-500 to-blue-500" 
+          },
+          { 
+            label: "Company Performance", 
+            value: avgPerformance, 
+            color: "from-blue-500 to-green-500" 
+          },
+        ],
+        pieData: [
+          { name: "Active Employees", value: employees.length > 0 ? Math.round((employees.filter(e => e.status === "Active" || !e.status).length / employees.length) * 100) : 0, color: "#ec4899" },
+          { name: "On Leave", value: calculateLeavePercentage(employees.length), color: "#3b82f6" },
+          { name: "In Training", value: trainings.length > 0 ? Math.round((trainings.length / employees.length) * 100) : 0, color: "#ef4444" },
+          { name: "Onboarding", value: onboarding.length > 0 ? Math.round((onboarding.length / employees.length) * 100) : 0, color: "#eab308" },
+          { name: "Offboarding", value: offboarding.length > 0 ? Math.round((offboarding.length / employees.length) * 100) : 0, color: "#a855f7" },
+        ],
+      })
+      }
+    } catch (err) {
+      console.error("Failed to fetch dashboard stats:", err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Helper function to generate monthly trends from performance data
+  const generateMonthlyTrends = (performances) => {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    const currentMonth = new Date().getMonth()
+    const last6Months = months.slice(Math.max(0, currentMonth - 5), currentMonth + 1)
+    
+    // Group performances by month
+    const monthlyScores = last6Months.map(month => {
+      const monthIndex = months.indexOf(month)
+      const monthPerformances = performances.filter(p => {
+        if (!p.date) return false
+        const perfDate = new Date(p.date)
+        return perfDate.getMonth() === monthIndex
+      })
+      const avgScore = monthPerformances.length > 0
+        ? Math.round(monthPerformances.reduce((sum, p) => sum + (p.score || 0), 0) / monthPerformances.length)
+        : 0
+      return avgScore
     })
+
+    return last6Months.map((month, index) => ({
+      name: month,
+      data01: monthlyScores[index] || 0,
+      data02: monthlyScores[index] ? monthlyScores[index] - 5 : 0,
+      data03: monthlyScores[index] ? monthlyScores[index] + 5 : 0,
+    }))
+  }
+
+  // Helper function to generate daily activity
+  const generateDailyActivity = (employees, projects) => {
+    const days = 30
+    return Array.from({ length: days }, (_, i) => {
+      // Simulate activity based on data size
+      const baseValue = Math.floor((employees.length + projects.length) / 10)
+      return {
+        name: `Day ${i + 1}`,
+        value: baseValue + Math.floor(Math.random() * 20),
+      }
+    })
+  }
+
+  // Helper function to calculate growth percentage
+  const calculateGrowthPercentage = (current, base) => {
+    if (base === 0) return 0
+    const percentage = Math.min(100, Math.round((current / base) * 100))
+    return percentage
+  }
+
+  // Helper function to calculate leave percentage
+  const calculateLeavePercentage = (totalEmployees) => {
+    if (totalEmployees === 0) return 0
+    // Estimate based on typical leave rates (5-10%)
+    return Math.round(Math.random() * 5 + 5)
   }
 
   const isAdmin = role === "admin"
@@ -71,34 +298,8 @@ export default function DashboardPage() {
     )
   }
 
-  // Chart data
-  const lineChartData = [
-    { name: "Jan", data01: 45, data02: 35, data03: 50 },
-    { name: "Feb", data01: 52, data02: 40, data03: 55 },
-    { name: "Mar", data01: 48, data02: 45, data03: 60 },
-    { name: "Apr", data01: 55, data02: 50, data03: 65 },
-    { name: "May", data01: 60, data02: 55, data03: 70 },
-    { name: "Jun", data01: 65, data02: 60, data03: 68 },
-  ]
-
-  const barChartData = Array.from({ length: 30 }, (_, i) => ({
-    name: `Day ${i + 1}`,
-    value: Math.floor(Math.random() * 100),
-  }))
-
-  const progressData = [
-    { label: "Employee Growth", value: 64, color: "from-blue-500 to-cyan-500" },
-    { label: "Department Efficiency", value: 75, color: "from-orange-500 to-blue-500" },
-    { label: "Company Performance", value: 80, color: "from-blue-500 to-green-500" },
-  ]
-
-  const pieData = [
-    { name: "Active", value: 40, color: "#ec4899" },
-    { name: "Pending", value: 75, color: "#eab308" },
-    { name: "On Leave", value: 20, color: "#3b82f6" },
-    { name: "Training", value: 80, color: "#ef4444" },
-    { name: "Remote", value: 60, color: "#a855f7" },
-  ]
+  // Use chart data from state
+  const { lineChartData, barChartData, progressData, pieData } = chartData
 
   const COLORS = ["#ec4899", "#eab308", "#3b82f6", "#ef4444", "#a855f7"]
 
@@ -226,24 +427,46 @@ export default function DashboardPage() {
 
         {/* Top Row - Data Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <DataSummaryCard
-            value={stats.totalEmployees}
-            label="Total Employees"
-            progress={75}
-            colors={["#3b82f6", "#10b981", "#eab308", "#f59e0b"]}
-          />
-          <DataSummaryCard
-            value={stats.totalCompanies}
-            label="Total Companies"
-            progress={85}
-            colors={["#f59e0b", "#eab308", "#10b981", "#3b82f6"]}
-          />
-          <DataSummaryCard
-            value={stats.totalDepartments}
-            label="Total Departments"
-            progress={65}
-            colors={["#10b981", "#3b82f6", "#8b5cf6", "#ec4899"]}
-          />
+          {loading ? (
+            <>
+              <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700">
+                <CardContent className="p-6">
+                  <p className="text-sm text-gray-400">Loading...</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700">
+                <CardContent className="p-6">
+                  <p className="text-sm text-gray-400">Loading...</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700">
+                <CardContent className="p-6">
+                  <p className="text-sm text-gray-400">Loading...</p>
+                </CardContent>
+              </Card>
+            </>
+          ) : (
+            <>
+              <DataSummaryCard
+                value={stats.totalEmployees}
+                label="Total Employees"
+                progress={Math.min(100, Math.round((stats.totalEmployees / 2000) * 100))}
+                colors={["#3b82f6", "#10b981", "#eab308", "#f59e0b"]}
+              />
+              <DataSummaryCard
+                value={stats.totalCompanies}
+                label="Total Companies"
+                progress={Math.min(100, Math.round((stats.totalCompanies / 100) * 100))}
+                colors={["#f59e0b", "#eab308", "#10b981", "#3b82f6"]}
+              />
+              <DataSummaryCard
+                value={stats.totalDepartments}
+                label="Total Departments"
+                progress={Math.min(100, Math.round((stats.totalDepartments / 50) * 100))}
+                colors={["#10b981", "#3b82f6", "#8b5cf6", "#ec4899"]}
+              />
+            </>
+          )}
         </div>
 
         {/* Second Row - Progress Cards and Charts */}
@@ -257,7 +480,7 @@ export default function DashboardPage() {
             <CardContent>
               <div className="text-center mb-6">
                 <span className="text-6xl font-bold bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">
-                  64%
+                  {loading ? "..." : `${progressData[2]?.value || 0}%`}
                 </span>
               </div>
               <p className="text-gray-300 text-sm leading-relaxed mb-2">
@@ -278,20 +501,26 @@ export default function DashboardPage() {
               <CardDescription className="text-gray-400">Onsectetuer adipiscing</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {progressData.map((item, index) => (
-                <div key={index}>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm text-gray-300">{item.label}</span>
-                    <span className="text-sm font-semibold text-white">{item.value}%</span>
-                  </div>
-                  <div className="h-3 bg-gray-700 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full bg-gradient-to-r ${item.color} rounded-full transition-all duration-500`}
-                      style={{ width: `${item.value}%` }}
-                    />
-                  </div>
+              {loading || progressData.length === 0 ? (
+                <div className="flex items-center justify-center py-8">
+                  <p className="text-sm text-gray-400">Loading metrics...</p>
                 </div>
-              ))}
+              ) : (
+                progressData.map((item, index) => (
+                  <div key={index}>
+                    <div className="flex justify-between mb-2">
+                      <span className="text-sm text-gray-300">{item.label}</span>
+                      <span className="text-sm font-semibold text-white">{item.value}%</span>
+                    </div>
+                    <div className="h-3 bg-gray-700 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full bg-gradient-to-r ${item.color} rounded-full transition-all duration-500`}
+                        style={{ width: `${item.value}%` }}
+                      />
+                    </div>
+                  </div>
+                ))
+              )}
             </CardContent>
           </Card>
         </div>
@@ -305,8 +534,13 @@ export default function DashboardPage() {
               <CardDescription className="text-gray-400">Performance over time</CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={lineChartData}>
+              {loading || lineChartData.length === 0 ? (
+                <div className="flex items-center justify-center h-[300px]">
+                  <p className="text-sm text-gray-400">Loading chart data...</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={300}>
+                  <AreaChart data={lineChartData}>
                   <defs>
                     <linearGradient id="colorData01" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#ec4899" stopOpacity={0.8} />
@@ -349,7 +583,8 @@ export default function DashboardPage() {
                     fill="url(#colorData03)"
                   />
                 </AreaChart>
-              </ResponsiveContainer>
+                </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
 
@@ -360,8 +595,13 @@ export default function DashboardPage() {
               <CardDescription className="text-gray-400">30-day overview</CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={barChartData}>
+              {loading || barChartData.length === 0 ? (
+                <div className="flex items-center justify-center h-[300px]">
+                  <p className="text-sm text-gray-400">Loading chart data...</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={barChartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="name" stroke="#9ca3af" hide />
                   <YAxis stroke="#9ca3af" />
@@ -391,7 +631,8 @@ export default function DashboardPage() {
                     ))}
                   </Bar>
                 </BarChart>
-              </ResponsiveContainer>
+                </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -498,8 +739,13 @@ export default function DashboardPage() {
               <CardDescription className="text-gray-400">Employee status distribution</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex justify-around items-center flex-wrap gap-4">
-                {pieData.map((item, index) => (
+              {loading || pieData.length === 0 ? (
+                <div className="flex items-center justify-center py-8">
+                  <p className="text-sm text-gray-400">Loading status data...</p>
+                </div>
+              ) : (
+                <div className="flex justify-around items-center flex-wrap gap-4">
+                  {pieData.map((item, index) => (
                   <div key={index} className="text-center">
                     <CircularProgress
                       value={item.value}
@@ -510,8 +756,9 @@ export default function DashboardPage() {
                     <p className="text-xs text-gray-300 mt-2">{item.name}</p>
                     <p className="text-xs font-semibold text-white">{item.value}%</p>
                   </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

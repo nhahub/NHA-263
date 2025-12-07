@@ -14,12 +14,14 @@ import {
   createTraining,
   updateTraining,
   deleteTraining,
+  getAllEmployees,
 } from "@/lib/api"
 
 export default function TrainingsPage() {
   const router = useRouter()
   const [role, setRole] = useState("")
   const [trainings, setTrainings] = useState([])
+  const [employees, setEmployees] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -29,6 +31,8 @@ export default function TrainingsPage() {
     description: "",
     startDate: "",
     endDate: "",
+    employeeID: "",
+    trainerID: "",
   })
 
   useEffect(() => {
@@ -55,16 +59,28 @@ export default function TrainingsPage() {
     try {
       setLoading(true)
       setError("")
-      const { data } = await getAllTrainings()
-      setTrainings(Array.isArray(data) ? data : [])
-      console.log("Trainings data:", data)
-      if (data && data.length > 0) {
-        console.log("First training structure:", data[0])
-        console.log("Available fields:", Object.keys(data[0]))
+      
+      const [trainingsRes, employeesRes] = await Promise.allSettled([
+        getAllTrainings(),
+        getAllEmployees(),
+      ])
+
+      if (trainingsRes.status === "fulfilled") {
+        setTrainings(Array.isArray(trainingsRes.value.data) ? trainingsRes.value.data : [])
+      } else {
+        console.error("Failed to fetch trainings:", trainingsRes.reason)
+        setError("Failed to load trainings. Please try again.")
+      }
+
+      if (employeesRes.status === "fulfilled") {
+        setEmployees(Array.isArray(employeesRes.value.data) ? employeesRes.value.data : [])
+      } else {
+        console.warn("Failed to fetch employees:", employeesRes.reason)
+        setEmployees([])
       }
     } catch (err) {
-      console.error("Failed to fetch trainings:", err)
-      setError("Failed to load trainings. Please try again.")
+      console.error("Failed to fetch data:", err)
+      setError("Failed to load data. Please try again.")
     } finally {
       setLoading(false)
     }
@@ -76,6 +92,8 @@ export default function TrainingsPage() {
       description: "",
       startDate: "",
       endDate: "",
+      employeeID: "",
+      trainerID: "",
     })
     setSelectedTraining(null)
   }
@@ -105,6 +123,16 @@ export default function TrainingsPage() {
       return
     }
 
+    if (!formData.employeeID || isNaN(parseInt(formData.employeeID))) {
+      setError("Employee must be selected.")
+      return
+    }
+
+    if (!formData.trainerID || isNaN(parseInt(formData.trainerID))) {
+      setError("Trainer must be selected.")
+      return
+    }
+
     // Validate dates
     const startDate = new Date(formData.startDate)
     const endDate = new Date(formData.endDate)
@@ -122,6 +150,8 @@ export default function TrainingsPage() {
         description: formData.description?.trim() || "",
         startDate: new Date(formData.startDate).toISOString(),
         endDate: new Date(formData.endDate).toISOString(),
+        employeeID: parseInt(formData.employeeID),
+        trainerID: parseInt(formData.trainerID),
       }
       
       if (selectedTraining && trainingId) {
@@ -183,6 +213,8 @@ export default function TrainingsPage() {
       description: training.description || "",
       startDate: formatDateForInput(training.startDate),
       endDate: formatDateForInput(training.endDate),
+      employeeID: training.employeeID?.toString() || training.employeeId?.toString() || "",
+      trainerID: training.trainerID?.toString() || training.trainerId?.toString() || "",
     })
   }
 
@@ -440,6 +472,58 @@ export default function TrainingsPage() {
                       required
                       className="bg-gray-700 border-gray-600 text-white focus:border-cyan-400"
                     />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <Label htmlFor="employeeID" className="text-gray-300">
+                      Employee <span className="text-red-400">*</span>
+                    </Label>
+                    <select
+                      id="employeeID"
+                      name="employeeID"
+                      value={formData.employeeID}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent"
+                    >
+                      <option value="">Select an employee</option>
+                      {employees.map((emp) => {
+                        const empId = emp.id || emp.employeeId
+                        const empName = `${emp.firstName || ""} ${emp.lastName || ""}`.trim() || emp.name || emp.email || `Employee #${empId}`
+                        return (
+                          <option key={empId} value={empId}>
+                            {empName}
+                          </option>
+                        )
+                      })}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label htmlFor="trainerID" className="text-gray-300">
+                      Trainer <span className="text-red-400">*</span>
+                    </Label>
+                    <select
+                      id="trainerID"
+                      name="trainerID"
+                      value={formData.trainerID}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent"
+                    >
+                      <option value="">Select a trainer</option>
+                      {employees.map((emp) => {
+                        const empId = emp.id || emp.employeeId
+                        const empName = `${emp.firstName || ""} ${emp.lastName || ""}`.trim() || emp.name || emp.email || `Employee #${empId}`
+                        return (
+                          <option key={empId} value={empId}>
+                            {empName}
+                          </option>
+                        )
+                      })}
+                    </select>
                   </div>
                 </div>
 

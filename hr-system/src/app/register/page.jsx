@@ -78,24 +78,28 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Register</CardTitle>
-          <CardDescription className="text-center">
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700 shadow-2xl">
+        <CardHeader className="space-y-1 pb-6">
+          <CardTitle className="text-3xl font-bold text-center text-cyan-400 mb-2">
+            Register
+          </CardTitle>
+          <CardDescription className="text-center text-gray-300">
             Create a new account to get started
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <CardContent className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md border border-destructive/20">
+              <div className="p-3 text-sm text-red-400 bg-red-900/20 rounded-md border border-red-700/50">
                 {error}
               </div>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username" className="text-gray-300">
+                Username
+              </Label>
               <Input
                 id="username"
                 name="username"
@@ -106,11 +110,14 @@ export default function RegisterPage() {
                 maxLength={50}
                 placeholder="Enter your username"
                 disabled={loading}
+                className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400 focus:border-cyan-400 focus:ring-cyan-400"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="employeeId">Employee ID</Label>
+              <Label htmlFor="employeeId" className="text-gray-300">
+                Employee ID
+              </Label>
               <Input
                 id="employeeId"
                 name="employeeId"
@@ -120,11 +127,14 @@ export default function RegisterPage() {
                 required
                 placeholder="Enter your employee ID"
                 disabled={loading}
+                className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400 focus:border-cyan-400 focus:ring-cyan-400"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-gray-300">
+                Password
+              </Label>
               <Input
                 id="password"
                 name="password"
@@ -135,11 +145,14 @@ export default function RegisterPage() {
                 minLength={8}
                 placeholder="Enter your password (min 8 characters)"
                 disabled={loading}
+                className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400 focus:border-cyan-400 focus:ring-cyan-400"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword" className="text-gray-300">
+                Confirm Password
+              </Label>
               <Input
                 id="confirmPassword"
                 name="confirmPassword"
@@ -149,16 +162,24 @@ export default function RegisterPage() {
                 required
                 placeholder="Confirm your password"
                 disabled={loading}
+                className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400 focus:border-cyan-400 focus:ring-cyan-400"
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button
+              type="submit"
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2.5 shadow-lg transition-all duration-200"
+              disabled={loading}
+            >
               {loading ? "Registering..." : "Register"}
             </Button>
 
-            <div className="text-center text-sm text-muted-foreground">
+            <div className="text-center text-sm text-gray-300">
               Already have an account?{" "}
-              <Link href="/login" className="text-primary hover:underline">
+              <Link
+                href="/login"
+                className="text-cyan-400 hover:text-cyan-300 hover:underline font-medium transition-colors"
+              >
                 Login here
               </Link>
             </div>

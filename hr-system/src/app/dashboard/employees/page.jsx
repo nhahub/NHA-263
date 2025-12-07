@@ -15,6 +15,7 @@ import {
   updateEmployee,
   deleteEmployee,
   getAllHRDepartments,
+  getAllJobs,
 } from "@/lib/api"
 
 export default function EmployeesPage() {
@@ -22,6 +23,7 @@ export default function EmployeesPage() {
   const [role, setRole] = useState("")
   const [employees, setEmployees] = useState([])
   const [departments, setDepartments] = useState([])
+  const [jobs, setJobs] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -64,10 +66,11 @@ export default function EmployeesPage() {
       setLoading(true)
       setError("")
       
-      // Fetch employees and departments in parallel
-      const [employeesRes, departmentsRes] = await Promise.allSettled([
+      // Fetch employees, departments, and jobs in parallel
+      const [employeesRes, departmentsRes, jobsRes] = await Promise.allSettled([
         getAllEmployees(),
         getAllHRDepartments(),
+        getAllJobs(),
       ])
 
       if (employeesRes.status === "fulfilled") {
@@ -82,6 +85,13 @@ export default function EmployeesPage() {
       } else {
         console.warn("Failed to fetch departments:", departmentsRes.reason)
         setDepartments([])
+      }
+
+      if (jobsRes.status === "fulfilled") {
+        setJobs(Array.isArray(jobsRes.value.data) ? jobsRes.value.data : [])
+      } else {
+        console.warn("Failed to fetch jobs:", jobsRes.reason)
+        setJobs([])
       }
     } catch (err) {
       console.error("Failed to fetch data:", err)
@@ -115,23 +125,35 @@ export default function EmployeesPage() {
     setError("")
 
     try {
-      // Prepare data according to API schema
-      const employeeData = {
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        phone: formData.phone?.trim() || "",
-        hireDate: formData.hireDate ? new Date(formData.hireDate).toISOString() : null,
-        jobId: formData.jobId ? parseInt(formData.jobId) : 0,
-        departmentId: formData.departmentId ? parseInt(formData.departmentId) : 0,
-        employmentStatus: formData.employmentStatus || "",
-      }
-
       if (selectedEmployee) {
-        await updateEmployee(selectedEmployee.id || selectedEmployee.employeeId, {
-          ...selectedEmployee,
-          ...employeeData,
-        })
+        // Update existing employee - PUT requires employeeId in the body
+        const employeeId = selectedEmployee.id || selectedEmployee.employeeId || selectedEmployee.employeeID
+        const updateData = {
+          employeeId: parseInt(employeeId),
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone?.trim() || "",
+          hireDate: formData.hireDate || "", // API expects date string in format "2025-12-07"
+          jobId: formData.jobId ? parseInt(formData.jobId) : 0,
+          departmentId: formData.departmentId ? parseInt(formData.departmentId) : 0,
+          employmentStatus: formData.employmentStatus?.trim() || "",
+        }
+        
+        console.log("Updating employee with data:", updateData)
+        await updateEmployee(employeeId, updateData)
       } else {
+        // Create new employee - POST schema
+        const employeeData = {
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone?.trim() || "",
+          hireDate: formData.hireDate ? new Date(formData.hireDate).toISOString() : null,
+          jobId: formData.jobId ? parseInt(formData.jobId) : 0,
+          departmentId: formData.departmentId ? parseInt(formData.departmentId) : 0,
+          employmentStatus: formData.employmentStatus?.trim() || "",
+        }
+        
+        console.log("Creating employee with data:", employeeData)
         await createEmployee(employeeData)
       }
 
@@ -305,16 +327,18 @@ export default function EmployeesPage() {
                               <FiEdit2 className="w-3.5 h-3.5 mr-1.5" />
                               Edit
                             </Button>
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="sm"
-                              className="h-7 px-3 text-xs"
-                              onClick={() => handleDelete(emp.id || emp.employeeId)}
-                            >
-                              <FiTrash2 className="w-3.5 h-3.5 mr-1.5" />
-                              Delete
-                            </Button>
+                            {role === "admin" && (
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                className="h-7 px-3 text-xs"
+                                onClick={() => handleDelete(emp.id || emp.employeeId)}
+                              >
+                                <FiTrash2 className="w-3.5 h-3.5 mr-1.5" />
+                                Delete
+                              </Button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -394,17 +418,25 @@ export default function EmployeesPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <Label htmlFor="jobId" className="text-gray-300">Job ID</Label>
-                    <Input
+                    <Label htmlFor="jobId" className="text-gray-300">Job</Label>
+                    <select
                       id="jobId"
                       name="jobId"
-                      type="number"
                       value={formData.jobId}
                       onChange={handleChange}
-                      min="0"
-                      className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 focus:border-cyan-400"
-                      placeholder="Enter job ID"
-                    />
+                      className="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent"
+                    >
+                      <option value="">Select a job</option>
+                      {jobs.map((job) => {
+                        const jobId = job.id || job.jobID || job.jobId
+                        const jobTitle = job.title || job.jobTitle || `Job #${jobId}`
+                        return (
+                          <option key={jobId} value={jobId}>
+                            {jobTitle}
+                          </option>
+                        )
+                      })}
+                    </select>
                   </div>
 
                   <div className="space-y-1">

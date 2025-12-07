@@ -27,9 +27,7 @@ export default function BenefitTypesPage() {
 
   const [formData, setFormData] = useState({
     name: "",
-    nameAr: "",
     description: "",
-    descriptionAr: "",
     isActive: true,
   })
 
@@ -86,9 +84,7 @@ export default function BenefitTypesPage() {
   const resetForm = () => {
     setFormData({
       name: "",
-      nameAr: "",
       description: "",
-      descriptionAr: "",
       isActive: true,
     })
     setSelectedBenefitType(null)
@@ -108,16 +104,20 @@ export default function BenefitTypesPage() {
     setError("")
 
     try {
+      // Prepare data according to API schema
+      const benefitTypeData = {
+        name: formData.name.trim(),
+        description: formData.description?.trim() || "",
+        isActive: formData.isActive,
+      }
+
       if (selectedBenefitType) {
-        const updateData = {
-          ...selectedBenefitType,
-          ...formData,
-        }
-        console.log("Updating benefit type with data:", updateData)
-        await updateBenefitType(selectedBenefitType.id || selectedBenefitType.benefitTypeId, updateData)
+        await updateBenefitType(
+          selectedBenefitType.id || selectedBenefitType.benefitTypeId,
+          benefitTypeData
+        )
       } else {
-        console.log("Creating benefit type with data:", formData)
-        await createBenefitType(formData)
+        await createBenefitType(benefitTypeData)
       }
 
       resetForm()
@@ -153,9 +153,7 @@ export default function BenefitTypesPage() {
     setIsFormOpen(true)
     setFormData({
       name: benefitType.name || "",
-      nameAr: benefitType.nameAr || "",
       description: benefitType.description || "",
-      descriptionAr: benefitType.descriptionAr || "",
       isActive: benefitType.isActive !== undefined ? benefitType.isActive : true,
     })
   }
@@ -164,15 +162,44 @@ export default function BenefitTypesPage() {
     if (!confirm("Are you sure you want to delete this benefit type?")) return
 
     try {
-      await deleteBenefitType(benefitTypeId)
+      // Ensure ID is a valid number
+      const id = parseInt(benefitTypeId)
+      if (isNaN(id) || id <= 0) {
+        setError("Invalid benefit type ID. Please refresh the page and try again.")
+        return
+      }
+
+      await deleteBenefitType(id)
       await fetchBenefitTypes()
+      setError("") // Clear any previous errors on success
     } catch (err) {
       console.error("Failed to delete benefit type:", err)
-      setError(
-        err.response?.data?.message ||
-        err.message ||
-        "Failed to delete benefit type. Please try again."
-      )
+      console.error("Error response:", err.response?.data)
+      
+      let errorMessage = "Failed to delete benefit type. Please try again."
+      
+      if (err.response?.data) {
+        const errorData = err.response.data
+        
+        if (errorData.message) {
+          errorMessage = errorData.message
+        } else if (errorData.error) {
+          errorMessage = errorData.error
+        } else if (errorData.title) {
+          errorMessage = errorData.title
+        } else if (typeof errorData === 'string') {
+          errorMessage = errorData
+        } else if (errorData.errors) {
+          const validationErrors = Object.entries(errorData.errors)
+            .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+            .join('; ')
+          errorMessage = validationErrors || errorMessage
+        }
+      } else if (err.message) {
+        errorMessage = err.message
+      }
+      
+      setError(errorMessage)
     }
   }
 
@@ -255,7 +282,6 @@ export default function BenefitTypesPage() {
                 <thead>
                   <tr className="border-b border-gray-700 bg-gray-800/50">
                     <th className="py-4 px-6 text-left text-sm font-semibold text-gray-300">Name</th>
-                    <th className="py-4 px-6 text-left text-sm font-semibold text-gray-300">Name (Arabic)</th>
                     <th className="py-4 px-6 text-left text-sm font-semibold text-gray-300">Description</th>
                     <th className="py-4 px-6 text-left text-sm font-semibold text-gray-300">Status</th>
                     {canManage && (
@@ -271,9 +297,6 @@ export default function BenefitTypesPage() {
                     >
                       <td className="py-4 px-6">
                         <div className="font-medium text-white">{bt.name || "-"}</div>
-                      </td>
-                      <td className="py-4 px-6">
-                        <span className="text-gray-300">{bt.nameAr || "-"}</span>
                       </td>
                       <td className="py-4 px-6">
                         <span className="text-gray-300 text-sm">
@@ -319,7 +342,14 @@ export default function BenefitTypesPage() {
                               variant="destructive"
                               size="sm"
                               className="h-7 px-3 text-xs bg-red-600 hover:bg-red-700 text-white"
-                              onClick={() => handleDelete(bt.id || bt.benefitTypeId)}
+                              onClick={() => {
+                                const id = bt.id || bt.benefitTypeId || bt.benefitTypeID
+                                if (id) {
+                                  handleDelete(id)
+                                } else {
+                                  setError("Cannot delete: Benefit type ID is missing.")
+                                }
+                              }}
                             >
                               <FiTrash2 className="w-3.5 h-3.5 mr-1.5" />
                               Delete
@@ -349,55 +379,32 @@ export default function BenefitTypesPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <Label htmlFor="name" className="text-gray-300">Name (English) *</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    placeholder="e.g., Health Insurance"
-                    className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 focus:border-cyan-400"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="nameAr" className="text-gray-300">Name (Arabic)</Label>
-                  <Input
-                    id="nameAr"
-                    name="nameAr"
-                    value={formData.nameAr}
-                    onChange={handleChange}
-                    placeholder="e.g., تأمين صحي"
-                    className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 focus:border-cyan-400"
-                  />
-                </div>
+              <div className="space-y-1">
+                <Label htmlFor="name" className="text-gray-300">
+                  Name <span className="text-red-400">*</span>
+                </Label>
+                <Input
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  placeholder="e.g., Health Insurance"
+                  className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 focus:border-cyan-400"
+                />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <Label htmlFor="description" className="text-gray-300">Description (English)</Label>
-                  <Input
-                    id="description"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    placeholder="Brief description of the benefit type"
-                    className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 focus:border-cyan-400"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="descriptionAr" className="text-gray-300">Description (Arabic)</Label>
-                  <Input
-                    id="descriptionAr"
-                    name="descriptionAr"
-                    value={formData.descriptionAr}
-                    onChange={handleChange}
-                    placeholder="وصف مختصر لنوع الم benefit"
-                    className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 focus:border-cyan-400"
-                  />
-                </div>
+              <div className="space-y-1">
+                <Label htmlFor="description" className="text-gray-300">Description</Label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows={3}
+                  placeholder="Brief description of the benefit type"
+                  className="flex min-h-[80px] w-full rounded-md border border-gray-600 bg-gray-700 text-white px-3 py-2 text-sm placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                />
               </div>
 
               <div className="flex items-center space-x-2">
