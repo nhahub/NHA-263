@@ -1,4 +1,4 @@
-﻿// HR Mapping Profile for Entities and DTOs
+// HR Mapping Profile for Entities and DTOs
 
 using AutoMapper;
 using HRSystem.BaseLibrary.Models;
@@ -212,8 +212,10 @@ namespace HRSystem.BaseLibrary.Profiles // Using the specified Profiles namespac
             // 1. Create Mapping: DTO to Entity (Input to DB)
             CreateMap<AttendanceCreateDto, TPLAttendance>()
                 .ForMember(dest => dest.AttendanceID, opt => opt.Ignore())
-                .ForMember(dest => dest.CheckInLatitude, opt => opt.MapFrom(src => src.CheckInLatitude))
-                .ForMember(dest => dest.CheckInLongitude, opt => opt.MapFrom(src => src.CheckInLongitude))
+                .ForMember(dest => dest.Date, opt => opt.MapFrom(src => src.Date))
+                .ForMember(dest => dest.CheckIn, opt => opt.MapFrom(src => src.CheckIn))
+                .ForMember(dest => dest.CheckOut, opt => opt.MapFrom(src => src.CheckOut))
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status))
                 .ForMember(dest => dest.EmployeeID, opt => opt.MapFrom(src => src.EmployeeID))
 
                 // Note: The Controller overrides EmployeeID from the Token, but mapping must be defined.
@@ -436,6 +438,18 @@ namespace HRSystem.BaseLibrary.Profiles // Using the specified Profiles namespac
             CreateMap<InterviewUpdateDto, TPLInterview>();
             CreateMap<TPLInterview, InterviewReadDto>();
 
+
+            CreateMap<TPLRequest, RequestReadDto>()
+              .ForMember(dest => dest.EmployeeId, opt => opt.MapFrom(src => src.employee_id))
+              .ForMember(dest => dest.RequestId, opt => opt.MapFrom(src => src.request_id))
+              .ForMember(dest => dest.StartDate, opt => opt.MapFrom(src => src.start_date))
+              .ForMember(dest => dest.EndDate, opt => opt.MapFrom(src => src.end_date))
+                .ForMember(dest => dest.NumberOfDays, opt => opt.MapFrom(src => src.number_of_days))
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.status));
+             
+
+
+    
         }
     }
 }
