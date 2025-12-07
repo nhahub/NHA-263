@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 [Route("api/[controller]")]
 [ApiController]
-
+[Authorize]
 public class ProjectAssignmentController : ControllerBase
 {
     private readonly ITPLProjectAssignmentRepository _assignRepo;
@@ -99,7 +99,6 @@ public class ProjectAssignmentController : ControllerBase
     // =========================================================================
     [HttpGet("my-assignments")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<TPLProjectAssignmentReadDTO>))]
-    [Authorize(Roles = "Employee")]
     public async Task<IActionResult> GetMyAssignments()
     {
         int employeeId = GetCurrentUserId();
