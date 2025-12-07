@@ -1,8 +1,9 @@
-﻿// In HRSystem.Infrastructure/Implementations/Services/LeaveManagementService.cs
-using HRSystem.Core.Services; // Assuming the interface is here
+// In HRSystem.Infrastructure/Implementations/Services/LeaveManagementService.cs
+using AutoMapper;
 using HRSystem.BaseLibrary.DTOs;
-using HRSystem.Infrastructure.Contracts;
 using HRSystem.BaseLibrary.Models;
+using HRSystem.Core.Services; // Assuming the interface is here
+using HRSystem.Infrastructure.Contracts;
 using System;
 using System.Threading.Tasks;
 
@@ -16,6 +17,7 @@ public class LeaveManagementService : ILeaveManagementService
     private readonly ITPLEmployeeRepository _employeeRepo;
     private readonly ILKPLeaveTypeRepository _leaveTypeRepo;
     private readonly ITPLLeaveRepository _leaveLogRepo; // Added for Step 4c
+    private readonly IMapper _mapper;
 
     // The constructor injects all dependencies
     public LeaveManagementService(
@@ -23,13 +25,29 @@ public class LeaveManagementService : ILeaveManagementService
         ITPLLeaveBalanceRepository balanceRepo,
         ITPLEmployeeRepository employeeRepo,
         ILKPLeaveTypeRepository leaveTypeRepo,
-        ITPLLeaveRepository leaveLogRepo) // Added ITPLLeaveRepository
+        ITPLLeaveRepository leaveLogRepo, // Added ITPLLeaveRepository
+        IMapper mapper)
     {
         _requestRepo = requestRepo;
         _balanceRepo = balanceRepo;
         _employeeRepo = employeeRepo;
         _leaveTypeRepo = leaveTypeRepo;
         _leaveLogRepo = leaveLogRepo;
+        _mapper = mapper;
+    }
+
+    public async Task<IEnumerable<RequestReadDto>> GetAllRequestsAsync()
+    {
+        // 1. Get all entities using the repository's inherited GetAllAsync method
+        var entities = await _requestRepo.GetAllAsync();
+
+        // 2. Map the list of entities to the list of DTOs
+        if (entities == null)
+        {
+            return Enumerable.Empty<RequestReadDto>();
+        }
+
+        return _mapper.Map<IEnumerable<RequestReadDto>>(entities);
     }
 
     // Helper function to calculate working days (Excludes Friday and Saturday)
