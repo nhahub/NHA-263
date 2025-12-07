@@ -1,11 +1,14 @@
-﻿// In HRSystem(Wizer)/Controllers/LeaveRequestController.cs
+// In HRSystem(Wizer)/Controllers/LeaveRequestController.cs
 
 using HRSystem.BaseLibrary.DTOs;
 using HRSystem.Core.Services; // Assuming ILeaveManagementService is referenced here
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Linq;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -114,4 +117,30 @@ public class LeaveRequestController : ControllerBase
 
         return BadRequest(new { Message = "Could not reject request. It may already be processed or not exist." });
     }
+
+
+
+    /// <summary>
+    /// Gets all leave requests regardless of employee or status. Accessible only to HR or Admin.
+    /// </summary>
+    [HttpGet("all")]
+    [Authorize(Roles = "admin,HR")] // Only HR or Admin can access all records
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<RequestReadDto>))]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetAllRequests()
+    {
+        var requests = await _leaveService.GetAllRequestsAsync();
+
+        if (requests == null || !requests.Any())
+        {
+            return NotFound(new { Message = "No leave requests found in the system." });
+        }
+
+        return Ok(requests);
+    }
+
+
+
+
+
 }
